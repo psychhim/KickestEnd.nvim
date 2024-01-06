@@ -1,5 +1,14 @@
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
+
+--[[Open Neotree on new tab]]
+vim.api.nvim_create_autocmd("TabNewEntered", {
+  group = vim.api.nvim_create_augroup("NeotreeOnNewTab", { clear = true }),
+  callback = vim.schedule_wrap(function()
+    vim.cmd("Neotree show")
+  end),
+})
+
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    https://github.com/folke/lazy.nvim
 --    `:help lazy.nvim.txt` for more info
@@ -144,7 +153,7 @@ require('lazy').setup({
   },
   {
     -- Theme
-    vim.cmd [[colorscheme lunaperche]]
+    vim.cmd [[colorscheme murphy]]
 
   },
 
