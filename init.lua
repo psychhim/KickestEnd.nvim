@@ -153,7 +153,7 @@ require('lazy').setup({
   },
   {
     -- Theme
-    vim.cmd [[colorscheme murphy]]
+    vim.cmd [[colorscheme torte]]
 
   },
 
