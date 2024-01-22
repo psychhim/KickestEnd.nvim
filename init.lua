@@ -289,6 +289,9 @@ vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagn
 --NeoTree
 vim.keymap.set('n', '<leader>n', '<Cmd>Neotree toggle<CR>')
 
+--Sync to Current Directory
+vim.keymap.set('n', '<leader>s', '<Cmd>cd %:p:h<CR>')
+
 --Terminal open in new tab
 vim.keymap.set('n', '<leader>t', '<Cmd>tabnew +term<CR>i')
 
