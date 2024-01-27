@@ -2,12 +2,12 @@ vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
 --[[Open Neotree on new tab]]
-vim.api.nvim_create_autocmd("TabNewEntered", {
-  group = vim.api.nvim_create_augroup("NeotreeOnNewTab", { clear = true }),
-  callback = vim.schedule_wrap(function()
-    vim.cmd("Neotree show")
-  end),
-})
+--vim.api.nvim_create_autocmd("TabNewEntered", {
+--  group = vim.api.nvim_create_augroup("NeotreeOnNewTab", { clear = true }),
+--  callback = vim.schedule_wrap(function()
+--    vim.cmd("Neotree show")
+--  end),
+--})
 
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    https://github.com/folke/lazy.nvim
@@ -287,13 +287,13 @@ vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagn
 --[[ Custom keymaps ]]
 
 --NeoTree sync to current directory & toggle
-vim.keymap.set('n', '<leader>n', '<Cmd>cd %:p:h | Neotree toggle<CR>')
+vim.keymap.set('n', '<leader>n', '<Cmd>cd %:p:h | Neotree toggle float<CR>')
 
 --Terminal open in new tab
 vim.keymap.set('n', '<leader>t', '<Cmd>tabnew +term<CR>i')
 
 --Close current window
-vim.keymap.set('n', '<leader>x', '<Cmd>q | Neotree close<CR>')
+vim.keymap.set('n', '<leader>x', '<Cmd>q<CR>')
 
 --Save current buffer
 vim.keymap.set('n', '<leader>w', '<Cmd>w<CR>')
