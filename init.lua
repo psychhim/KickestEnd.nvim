@@ -2,7 +2,7 @@ vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
 --[[Open Neotree on new tab]]
---vim.api.nvim_create_autocmd("TabNewEntered", {
+--vim.gpi.nvim_create_autocmd("TabNewEntered", {
 --  group = vim.api.nvim_create_augroup("NeotreeOnNewTab", { clear = true }),
 --  callback = vim.schedule_wrap(function()
 --    vim.cmd("Neotree show")
@@ -152,11 +152,12 @@ require('lazy').setup({
     },
   },
   {
-    -- Theme
-    vim.cmd [[colorscheme torte]]
-
+    --kanagawa colorscheme
+    "rebelot/kanagawa.nvim",
+    lazy = false,
+    priority = 1000,
+    opts = {},
   },
-
   {
     -- Set lualine as statusline
     'nvim-lualine/lualine.nvim',
@@ -282,7 +283,6 @@ vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Go to previous dia
 vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next diagnostic message' })
 vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Open floating diagnostic message' })
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostics list' })
-
 
 --[[ Custom keymaps ]]
 
@@ -635,6 +635,7 @@ cmp.setup {
     { name = 'path' },
   },
 }
-
+-- Theme
+vim.cmd [[colorscheme kanagawa]]
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
