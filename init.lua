@@ -58,12 +58,12 @@ require('lazy').setup({
       'folke/neodev.nvim',
     },
   },
-  {
-    -- Autocompletion
+  { -- Autocompletion
     'hrsh7th/nvim-cmp',
     dependencies = {
       -- Snippet Engine & its associated nvim-cmp source
       'L3MON4D3/LuaSnip',
+      dependencies = { "rafamadriz/friendly-snippets" },
       'saadparwaiz1/cmp_luasnip',
 
       -- Adds LSP completion capabilities
@@ -164,7 +164,7 @@ require('lazy').setup({
     -- See `:help lualine.txt`
     opts = {
       options = {
-        icons_enabled = false,
+        icons_enabled = true,
         component_separators = '|',
         section_separators = '',
       },
@@ -211,7 +211,13 @@ require('lazy').setup({
     },
     build = ':TSUpdate',
   },
-
+  { --Autopairs
+    'windwp/nvim-autopairs',
+    event = "InsertEnter",
+    config = true
+    -- use opts = {} for passing setup options
+    -- this is equalent to setup({}) function
+  },
   -- NOTE: Next Step on Your Neovim Journey: Add/Configure additional "plugins" for kickstart
   --       These are some example plugins that I've included in the kickstart repository.
   --       Uncomment any of the lines below to enable them.
@@ -226,6 +232,7 @@ require('lazy').setup({
   --    For additional information see: https://github.com/folke/lazy.nvim#-structuring-your-plugins
   { import = 'custom.plugins' },
 }, {})
+
 
 -- [[ Setting options ]]
 -- See `:help vim.o`
@@ -293,7 +300,10 @@ vim.keymap.set('n', '<leader>n', '<Cmd>cd %:p:h | Neotree toggle float<CR>')
 vim.keymap.set('n', '<leader>t', '<Cmd>tabnew +term<CR>i')
 
 --Close current window
-vim.keymap.set('n', '<leader>x', '<Cmd>q<CR>')
+vim.keymap.set('n', '<leader>q', '<Cmd>q<CR>')
+
+--Discard changes and Close current window
+vim.keymap.set('n', '<leader>qq', '<Cmd>q!<CR>')
 
 --Save current buffer
 vim.keymap.set('n', '<leader>w', '<Cmd>w<CR>')
@@ -588,7 +598,8 @@ mason_lspconfig.setup_handlers {
 -- See `:help cmp`
 local cmp = require 'cmp'
 local luasnip = require 'luasnip'
-require('luasnip.loaders.from_vscode').lazy_load()
+--require("luasnip.loaders.from_vscode").lazy_load()
+--require('luasnip.loaders.from_vscode').lazy_load({ paths = { "~/.config/nvim/my_snippets" } })
 luasnip.config.setup {}
 
 cmp.setup {
@@ -635,8 +646,10 @@ cmp.setup {
     { name = 'path' },
   },
 }
--- Theme
+--Load Luasnip.loaders
+require('luasnip.loaders.from_vscode').lazy_load()
 
+-- Theme
 require('kanagawa').setup({ transparent = true })
 vim.cmd [[colorscheme kanagawa]]
 -- The line beneath this is called `modeline`. See `:help modeline`
