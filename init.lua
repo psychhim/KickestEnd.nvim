@@ -300,13 +300,13 @@ vim.keymap.set('n', '<leader>n', '<Cmd>cd %:p:h | Neotree toggle float<CR>')
 vim.keymap.set('n', '<leader>t', '<Cmd>tabnew +term<CR>i')
 
 --Close current window
-vim.keymap.set('n', '<leader>q', '<Cmd>q<CR>')
+vim.keymap.set('n', '<Tab>q', '<Cmd>q<CR>')
 
 --Discard changes and Close current window
 vim.keymap.set('n', '<leader>qq', '<Cmd>q!<CR>')
 
 --Save current buffer
-vim.keymap.set('n', '<leader>w', '<Cmd>w<CR>')
+vim.keymap.set('n', '<Tab>w', '<Cmd>w<CR>')
 
 --Switch below/right split windows
 vim.keymap.set('n', '<leader><Tab>', '<C-W><C-W>')
