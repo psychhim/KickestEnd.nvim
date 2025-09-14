@@ -28,6 +28,7 @@ vim.opt.rtp:prepend(lazypath)
 -- [[ Configure plugins ]]
 -- NOTE: Here is where you install your plugins.
 --  You can configure plugins using the `config` key.
+--
 --  You can also configure plugins after the setup call,
 --    as they will be available in your neovim runtime.
 require('lazy').setup({
@@ -299,41 +300,13 @@ vim.keymap.set('n', '<leader>n', '<Cmd>cd %:p:h | Neotree toggle float<CR>')
 vim.keymap.set('n', '<leader>t', '<Cmd>tabnew +term<CR>i')
 
 --Close current window
-vim.keymap.set('n', '<leader>q', '<Cmd>q<CR>')
-
--- Save current buffer (asks for filename if new/unsaved)
-vim.keymap.set('n', '<leader>w', function()
-  if vim.api.nvim_buf_get_name(0) == "" then
-    -- Ask user for a filename
-    local filename = vim.fn.input("Save as: ", "", "file")
-    if filename ~= "" then
-      vim.cmd("saveas " .. vim.fn.fnameescape(filename))
-    else
-      print("Save cancelled")
-    end
-  else
-    vim.cmd("w")
-  end
-end, { desc = "Save buffer (prompt if new file)" })
+vim.keymap.set('n', '<Tab>q', '<Cmd>q<CR>')
 
 --Discard changes and Close current window
-vim.keymap.set('n', '<leader>qn', '<Cmd>q!<CR>')
+vim.keymap.set('n', '<leader>qq', '<Cmd>q!<CR>')
 
--- Save changes and close current window (asks for filename if new/unsaved)
-vim.keymap.set('n', '<leader>qy', function()
-  if vim.api.nvim_buf_get_name(0) == "" then
-    -- Ask user for a filename
-    local filename = vim.fn.input("Save as: ", "", "file")
-    if filename ~= "" then
-      vim.cmd("saveas " .. vim.fn.fnameescape(filename))
-      vim.cmd("q")
-    else
-      print("Save cancelled")
-    end
-  else
-    vim.cmd("wq")
-  end
-end, { desc = "Save & quit (prompt if new file)" })
+--Save current buffer
+vim.keymap.set('n', '<Tab>w', '<Cmd>w<CR>')
 
 --Switch below/right split windows
 vim.keymap.set('n', '<leader><Tab>', '<C-W><C-W>')
@@ -547,23 +520,26 @@ local on_attach = function(_, bufnr)
   end, { desc = 'Format current buffer with LSP' })
 end
 
--- document existing key chains
-require('which-key').register {
-  ['<leader>c'] = { name = '[C]ode', _ = 'which_key_ignore' },
-  ['<leader>d'] = { name = '[D]ocument', _ = 'which_key_ignore' },
-  ['<leader>g'] = { name = '[G]it', _ = 'which_key_ignore' },
-  ['<leader>h'] = { name = 'Git [H]unk', _ = 'which_key_ignore' },
-  ['<leader>r'] = { name = '[R]ename', _ = 'which_key_ignore' },
-  ['<leader>s'] = { name = '[S]earch', _ = 'which_key_ignore' },
-  ['<leader>t'] = { name = '[T]oggle', _ = 'which_key_ignore' },
-  ['<leader>w'] = { name = '[W]orkspace', _ = 'which_key_ignore' },
-}
--- register which-key VISUAL mode
--- required for visual <leader>hs (hunk stage) to work
+-- Document existing key chains
 require('which-key').register({
-  ['<leader>'] = { name = 'VISUAL <leader>' },
-  ['<leader>h'] = { 'Git [H]unk' },
-}, { mode = 'v' })
+  { "<leader>c", group = "[C]ode" },
+  { "<leader>d", group = "[D]ocument" },
+  { "<leader>g", group = "[G]it" },
+  { "<leader>h", group = "Git [H]unk" },
+  { "<leader>r", group = "[R]ename" },
+  { "<leader>s", group = "[S]earch" },
+  { "<leader>t", group = "[T]oggle" },
+  { "<leader>w", group = "[W]orkspace" },
+})
+
+-- Visual mode mappings
+require('which-key').register({
+  { "", group = "VISUAL <leader>", mode = "v" },
+   71     { "", group = "Git [H]unk", mode = "v" },
+})
+
+
+
 
 -- mason-lspconfig requires that these setup functions are called in this order
 -- before setting up the servers.
