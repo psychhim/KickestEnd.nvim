@@ -1,14 +1,6 @@
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
---[[Open Neotree on new tab]]
---vim.gpi.nvim_create_autocmd("TabNewEntered", {
---  group = vim.api.nvim_create_augroup("NeotreeOnNewTab", { clear = true }),
---  callback = vim.schedule_wrap(function()
---    vim.cmd("Neotree show")
---  end),
---})
-
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    https://github.com/folke/lazy.nvim
 --    `:help lazy.nvim.txt` for more info
@@ -30,6 +22,18 @@ vim.opt.rtp:prepend(lazypath)
 --  You can configure plugins using the `config` key.
 --  You can also configure plugins after the setup call,
 --    as they will be available in your neovim runtime.
+
+-- Disables which-key healthcheck notifications
+do
+  local orig_notify = vim.notify
+  vim.notify = function(msg, ...)
+    if type(msg) == "string" and msg:match("which%-key") then
+      return  -- ignore WhichKey health messages
+    end
+    return orig_notify(msg, ...)
+  end
+end
+
 require('lazy').setup({
   -- NOTE: First, some plugins that don't require any configuration
   -- Git related plugins
@@ -287,16 +291,22 @@ vim.keymap.set('n', 'j', "v:count == 0 ? 'gj' : 'j'", { expr = true, silent = tr
 -- Diagnostic keymaps
 vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Go to previous diagnostic message' })
 vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next diagnostic message' })
-vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Open floating diagnostic message' })
-vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostics list' })
+--vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Open floating diagnostic message' })
+--vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostics list' })
 
 --[[ Custom keymaps ]]
 
---NeoTree sync to current directory & toggle
+--Neo-tree sync to current directory & toggle
 vim.keymap.set('n', '<leader>n', '<Cmd>cd %:p:h | Neotree toggle float<CR>')
 
 --Terminal open in new tab
 vim.keymap.set('n', '<leader>t', '<Cmd>tabnew +term<CR>i')
+
+-- Create an empty buffer in a new tab
+vim.keymap.set("n", "<Leader>e", function()
+  vim.cmd("tabnew")   -- create a new tab
+  vim.cmd("enew")     -- create a new empty buffer in it
+end, { noremap = true, silent = true })
 
 -- Save current buffer (asks for filename if new/unsaved)
 vim.keymap.set('n', '<leader>w', function()
@@ -645,7 +655,6 @@ mason_lspconfig.setup {
     end,
   },
 }
-
 
 -- [[ Configure nvim-cmp ]]
 -- See `:help cmp`
