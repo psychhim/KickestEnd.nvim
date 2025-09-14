@@ -298,9 +298,6 @@ vim.keymap.set('n', '<leader>n', '<Cmd>cd %:p:h | Neotree toggle float<CR>')
 --Terminal open in new tab
 vim.keymap.set('n', '<leader>t', '<Cmd>tabnew +term<CR>i')
 
---Close current window
-vim.keymap.set('n', '<leader>q', '<Cmd>q<CR>')
-
 -- Save current buffer (asks for filename if new/unsaved)
 vim.keymap.set('n', '<leader>w', function()
   if vim.api.nvim_buf_get_name(0) == "" then
@@ -316,8 +313,31 @@ vim.keymap.set('n', '<leader>w', function()
   end
 end, { desc = "Save buffer (prompt if new file)" })
 
---Discard changes and Close current window
-vim.keymap.set('n', '<leader>qn', '<Cmd>q!<CR>')
+-- Close current window (asks if buffer is unsaved)
+vim.keymap.set('n', '<leader>q', function()
+  if vim.bo.modified then
+    local choice = vim.fn.input("Buffer modified! Save (y), Discard (n), Cancel (any other key)? ")
+    if choice:lower() == "y" then
+      if vim.api.nvim_buf_get_name(0) == "" then
+        local filename = vim.fn.input("Save as: ", "", "file")
+        if filename ~= "" then
+          vim.cmd("saveas " .. vim.fn.fnameescape(filename))
+          vim.cmd("q")
+        else
+          print("Save cancelled")
+        end
+      else
+        vim.cmd("wq")
+      end
+    elseif choice:lower() == "n" then
+      vim.cmd("q!")
+    else
+      print("Quit cancelled")
+    end
+  else
+    vim.cmd("q")
+  end
+end, { desc = "Close buffer (prompt if modified)" })
 
 -- Save changes and close current window (asks for filename if new/unsaved)
 vim.keymap.set('n', '<leader>qy', function()
@@ -335,12 +355,14 @@ vim.keymap.set('n', '<leader>qy', function()
   end
 end, { desc = "Save & quit (prompt if new file)" })
 
+--Discard changes and Close current window
+vim.keymap.set('n', '<leader>qn', '<Cmd>q!<CR>')
+
 --Switch below/right split windows
 vim.keymap.set('n', '<leader><Tab>', '<C-W><C-W>')
 
 --Switch above/left split windows
 vim.keymap.set('n', '<Tab>', '<C-W>W')
-
 
 -- [[ Highlight on yank ]]
 -- See `:help vim.highlight.on_yank()`
