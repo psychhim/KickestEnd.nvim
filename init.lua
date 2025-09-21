@@ -112,8 +112,9 @@ require('lazy').setup({
       'rafamadriz/friendly-snippets',
     },
   },
+
   -- Useful plugin to show you pending keybinds.
-  { 'folke/which-key.nvim', opts = {} },
+  { 'folke/which-key.nvim',  opts = {} },
   {
     -- Adds git related signs to the gutter, as well as utilities for managing changes
     'lewis6991/gitsigns.nvim',
@@ -338,7 +339,7 @@ vim.keymap.set('n', '<leader>t', '<Cmd>tabnew +term<CR>i')
 -- Create an empty buffer in a new tab
 vim.keymap.set('n', '<Leader>e', function()
   vim.cmd 'tabnew' -- create a new tab
-  vim.cmd 'enew' -- create a new empty buffer in it
+  vim.cmd 'enew'   -- create a new empty buffer in it
 end, { noremap = true, silent = true })
 
 -- Save current buffer (asks for filename if new/unsaved)
@@ -434,6 +435,71 @@ require('telescope').setup {
 -- Enable telescope fzf native, if installed
 pcall(require('telescope').load_extension, 'fzf')
 
+-- smart_open function for Telescope to check if the current tab has an empty "No Name" buffer. If it has, it replaces the empty buffer and open a file in the same tab
+local actions = require 'telescope.actions'
+local action_state = require 'telescope.actions.state'
+
+local function smart_open(prompt_bufnr)
+  local entry = action_state.get_selected_entry()
+  if not entry then
+    return
+  end
+
+  local path = entry.path or entry.filename
+  if not path then
+    return
+  end
+
+  if prompt_bufnr and vim.api.nvim_buf_is_valid(prompt_bufnr) then
+    pcall(actions.close, prompt_bufnr)
+  end
+
+  -- 1. If file is already open → jump to it
+  local tabpages = vim.api.nvim_list_tabpages()
+  for _, tab in ipairs(tabpages) do
+    for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do
+      local buf = vim.api.nvim_win_get_buf(win)
+      if vim.api.nvim_buf_get_name(buf) == path then
+        vim.api.nvim_set_current_tabpage(tab) -- jump to tab
+        vim.api.nvim_set_current_win(win)     -- jump to window
+        return
+      end
+    end
+  end
+
+  -- 2. If current tab has an empty "No Name" buffer → reuse it
+  local wins = vim.api.nvim_tabpage_list_wins(0)
+  for _, win in ipairs(wins) do
+    local buf = vim.api.nvim_win_get_buf(win)
+    local name = vim.api.nvim_buf_get_name(buf)
+    local buftype = vim.api.nvim_buf_get_option(buf, 'buftype')
+    local modified = vim.api.nvim_buf_get_option(buf, 'modified')
+    if name == '' and buftype == '' and not modified then
+      vim.api.nvim_set_current_win(win)
+      vim.cmd('edit ' .. vim.fn.fnameescape(path))
+      return
+    end
+  end
+
+  -- 3. Otherwise → open in a new tab
+  vim.cmd('tabnew ' .. vim.fn.fnameescape(path))
+end
+
+-- Telescope keymap using Smart Open
+vim.keymap.set('n', '<leader>sf', function()
+  require('telescope.builtin').find_files {
+    attach_mappings = function(_, map)
+      map('i', '<CR>', function(prompt_bufnr)
+        smart_open(prompt_bufnr)
+      end)
+      map('n', '<CR>', function(prompt_bufnr)
+        smart_open(prompt_bufnr)
+      end)
+      return true
+    end,
+  }
+end, { desc = '[S]earch [F]iles (Smart Open)' })
+
 -- Telescope live_grep in git root
 -- Function to find the git root directory based on the current buffer's path
 local function find_git_root()
@@ -490,7 +556,6 @@ end
 vim.keymap.set('n', '<leader>s/', telescope_live_grep_open_files, { desc = '[S]earch [/] in Open Files' })
 vim.keymap.set('n', '<leader>ss', require('telescope.builtin').builtin, { desc = '[S]earch [S]elect Telescope' })
 vim.keymap.set('n', '<leader>gf', require('telescope.builtin').git_files, { desc = 'Search [G]it [F]iles' })
-vim.keymap.set('n', '<leader>sf', require('telescope.builtin').find_files, { desc = '[S]earch [F]iles' })
 vim.keymap.set('n', '<leader>sh', require('telescope.builtin').help_tags, { desc = '[S]earch [H]elp' })
 vim.keymap.set('n', '<leader>sw', require('telescope.builtin').grep_string, { desc = '[S]earch current [W]ord' })
 vim.keymap.set('n', '<leader>sg', require('telescope.builtin').live_grep, { desc = '[S]earch by [G]rep' })
