@@ -27,8 +27,8 @@ vim.opt.rtp:prepend(lazypath)
 do
   local orig_notify = vim.notify
   vim.notify = function(msg, ...)
-    if type(msg) == "string" and msg:match("which%-key") then
-      return  -- ignore WhichKey health messages
+    if type(msg) == 'string' and msg:match 'which%-key' then
+      return -- ignore WhichKey health messages
     end
     return orig_notify(msg, ...)
   end
@@ -53,6 +53,40 @@ require('lazy').setup({
       'williamboman/mason.nvim',
       'williamboman/mason-lspconfig.nvim',
 
+      -- Conform
+      {
+        'stevearc/conform.nvim',
+        opts = {
+          -- Set formatters per filetype
+          formatters_by_ft = {
+            lua = { 'stylua' },
+            python = { 'black', 'isort' },
+            javascript = { 'prettierd', 'prettier' },
+            typescript = { 'prettierd', 'prettier' },
+            css = { 'prettier' },
+            html = { 'prettier' },
+            json = { 'prettier' },
+            c = { 'clang-format' },
+            cpp = { 'clang-format' },
+            bash = { 'shfmt' },
+            rust = { 'rustfmt' },
+          },
+          format_on_save = {
+            timeout_ms = 500,
+            lsp_format = 'fallback', -- fall back to LSP if no external formatter
+          },
+        },
+      },
+      -- Install formatters automatically
+      {
+        'zapling/mason-conform.nvim',
+        dependencies = { 'williamboman/mason.nvim', 'stevearc/conform.nvim' },
+        config = function()
+          require('mason-conform').setup {
+            ensure_installed = true, -- auto-install all formatters listed in Conform
+          }
+        end,
+      },
       -- Useful status updates for LSP
       -- NOTE: `opts = {}` is the same as calling `require('fidget').setup({})`
       { 'j-hui/fidget.nvim', opts = {} },
@@ -66,7 +100,7 @@ require('lazy').setup({
     dependencies = {
       -- Snippet Engine & its associated nvim-cmp source
       'L3MON4D3/LuaSnip',
-      dependencies = { "rafamadriz/friendly-snippets" },
+      dependencies = { 'rafamadriz/friendly-snippets' },
       'saadparwaiz1/cmp_luasnip',
 
       -- Adds LSP completion capabilities
@@ -79,7 +113,7 @@ require('lazy').setup({
     },
   },
   -- Useful plugin to show you pending keybinds.
-  { 'folke/which-key.nvim',  opts = {} },
+  { 'folke/which-key.nvim', opts = {} },
   {
     -- Adds git related signs to the gutter, as well as utilities for managing changes
     'lewis6991/gitsigns.nvim',
@@ -156,7 +190,7 @@ require('lazy').setup({
   },
   {
     --kanagawa colorscheme
-    "rebelot/kanagawa.nvim",
+    'rebelot/kanagawa.nvim',
     lazy = false,
     priority = 1000,
     opts = {},
@@ -216,8 +250,8 @@ require('lazy').setup({
   },
   { --Autopairs
     'windwp/nvim-autopairs',
-    event = "InsertEnter",
-    config = true
+    event = 'InsertEnter',
+    config = true,
     -- use opts = {} for passing setup options
     -- this is equalent to setup({}) function
   },
@@ -235,7 +269,6 @@ require('lazy').setup({
   --    For additional information see: https://github.com/folke/lazy.nvim#-structuring-your-plugins
   { import = 'custom.plugins' },
 }, {})
-
 
 -- [[ Setting options ]]
 -- See `:help vim.o`
@@ -303,67 +336,67 @@ vim.keymap.set('n', '<leader>n', '<Cmd>cd %:p:h | Neotree toggle float<CR>')
 vim.keymap.set('n', '<leader>t', '<Cmd>tabnew +term<CR>i')
 
 -- Create an empty buffer in a new tab
-vim.keymap.set("n", "<Leader>e", function()
-  vim.cmd("tabnew")   -- create a new tab
-  vim.cmd("enew")     -- create a new empty buffer in it
+vim.keymap.set('n', '<Leader>e', function()
+  vim.cmd 'tabnew' -- create a new tab
+  vim.cmd 'enew' -- create a new empty buffer in it
 end, { noremap = true, silent = true })
 
 -- Save current buffer (asks for filename if new/unsaved)
 vim.keymap.set('n', '<leader>w', function()
-  if vim.api.nvim_buf_get_name(0) == "" then
+  if vim.api.nvim_buf_get_name(0) == '' then
     -- Ask user for a filename
-    local filename = vim.fn.input("Save as: ", "", "file")
-    if filename ~= "" then
-      vim.cmd("saveas " .. vim.fn.fnameescape(filename))
+    local filename = vim.fn.input('Save as: ', '', 'file')
+    if filename ~= '' then
+      vim.cmd('saveas ' .. vim.fn.fnameescape(filename))
     else
-      print("Save cancelled")
+      print 'Save cancelled'
     end
   else
-    vim.cmd("w")
+    vim.cmd 'w'
   end
-end, { desc = "Save buffer (prompt if new file)" })
+end, { desc = 'Save buffer (prompt if new file)' })
 
 -- Close current window (asks if buffer is unsaved)
 vim.keymap.set('n', '<leader>q', function()
   if vim.bo.modified then
-    local choice = vim.fn.input("Buffer modified! Save (y), Discard (n), Cancel (any other key)? ")
-    if choice:lower() == "y" then
-      if vim.api.nvim_buf_get_name(0) == "" then
-        local filename = vim.fn.input("Save as: ", "", "file")
-        if filename ~= "" then
-          vim.cmd("saveas " .. vim.fn.fnameescape(filename))
-          vim.cmd("q")
+    local choice = vim.fn.input 'Buffer modified! Save (y), Discard (n), Cancel (any other key)? '
+    if choice:lower() == 'y' then
+      if vim.api.nvim_buf_get_name(0) == '' then
+        local filename = vim.fn.input('Save as: ', '', 'file')
+        if filename ~= '' then
+          vim.cmd('saveas ' .. vim.fn.fnameescape(filename))
+          vim.cmd 'q'
         else
-          print("Save cancelled")
+          print 'Save cancelled'
         end
       else
-        vim.cmd("wq")
+        vim.cmd 'wq'
       end
-    elseif choice:lower() == "n" then
-      vim.cmd("q!")
+    elseif choice:lower() == 'n' then
+      vim.cmd 'q!'
     else
-      print("Quit cancelled")
+      print 'Quit cancelled'
     end
   else
-    vim.cmd("q")
+    vim.cmd 'q'
   end
-end, { desc = "Close buffer (prompt if modified)" })
+end, { desc = 'Close buffer (prompt if modified)' })
 
 -- Save changes and close current window (asks for filename if new/unsaved)
 vim.keymap.set('n', '<leader>qy', function()
-  if vim.api.nvim_buf_get_name(0) == "" then
+  if vim.api.nvim_buf_get_name(0) == '' then
     -- Ask user for a filename
-    local filename = vim.fn.input("Save as: ", "", "file")
-    if filename ~= "" then
-      vim.cmd("saveas " .. vim.fn.fnameescape(filename))
-      vim.cmd("q")
+    local filename = vim.fn.input('Save as: ', '', 'file')
+    if filename ~= '' then
+      vim.cmd('saveas ' .. vim.fn.fnameescape(filename))
+      vim.cmd 'q'
     else
-      print("Save cancelled")
+      print 'Save cancelled'
     end
   else
-    vim.cmd("wq")
+    vim.cmd 'wq'
   end
-end, { desc = "Save & quit (prompt if new file)" })
+end, { desc = 'Save & quit (prompt if new file)' })
 
 --Discard changes and Close current window
 vim.keymap.set('n', '<leader>qn', '<Cmd>q!<CR>')
@@ -573,10 +606,10 @@ local on_attach = function(_, bufnr)
     print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
   end, '[W]orkspace [L]ist Folders')
 
-  -- Create a command `:Format` local to the LSP buffer
-  vim.api.nvim_buf_create_user_command(bufnr, 'Format', function(_)
-    vim.lsp.buf.format()
-  end, { desc = 'Format current buffer with LSP' })
+  -- Create a command `:Format` local to the buffer using Conform
+  vim.api.nvim_buf_create_user_command(bufnr, 'Format', function()
+    require('conform').format { bufnr = bufnr }
+  end, { desc = 'Format current buffer with Conform' })
 end
 
 -- document existing key chains
@@ -712,7 +745,7 @@ cmp.setup {
 require('luasnip.loaders.from_vscode').lazy_load()
 
 -- Theme
-require('kanagawa').setup({ transparent = true })
+require('kanagawa').setup { transparent = true }
 vim.cmd [[colorscheme kanagawa]]
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
