@@ -1,13 +1,13 @@
 -- Unless you are still migrating, remove the deprecated commands from v1.x
-vim.cmd [[ let g:neo_tree_remove_legacy_commands = 1 ]]
+vim.cmd([[ let g:neo_tree_remove_legacy_commands = 1 ]])
 
 return {
-  'nvim-neo-tree/neo-tree.nvim',
-  version = '*',
+  "nvim-neo-tree/neo-tree.nvim",
+  version = "*",
   dependencies = {
-    'nvim-lua/plenary.nvim',
-    'nvim-tree/nvim-web-devicons',
-    'MunifTanjim/nui.nvim',
+    "nvim-lua/plenary.nvim",
+    "nvim-tree/nvim-web-devicons",
+    "MunifTanjim/nui.nvim",
   },
   config = function()
     local function smart_open(state)
@@ -30,7 +30,10 @@ return {
                 for _, w in ipairs(vim.api.nvim_list_wins()) do
                   if vim.api.nvim_win_is_valid(w) then
                     local b = vim.api.nvim_win_get_buf(w)
-                    if vim.api.nvim_buf_is_valid(b) and vim.api.nvim_buf_get_option(b, 'filetype') == 'neo-tree' then
+                    if
+                        vim.api.nvim_buf_is_valid(b)
+                        and vim.api.nvim_buf_get_option(b, "filetype") == "neo-tree"
+                    then
                       vim.api.nvim_win_close(w, true)
                     end
                   end
@@ -50,9 +53,9 @@ return {
           local buf = vim.api.nvim_win_get_buf(win)
           if vim.api.nvim_buf_is_valid(buf) then
             local bufname = vim.api.nvim_buf_get_name(buf)
-            local buftype = vim.api.nvim_buf_get_option(buf, 'buftype')
-            local modified = vim.api.nvim_buf_get_option(buf, 'modified')
-            if bufname == '' and buftype == '' and not modified then
+            local buftype = vim.api.nvim_buf_get_option(buf, "buftype")
+            local modified = vim.api.nvim_buf_get_option(buf, "modified")
+            if bufname == "" and buftype == "" and not modified then
               empty_buf = buf
               vim.api.nvim_set_current_win(win)
               break
@@ -62,50 +65,53 @@ return {
       end
 
       if empty_buf then
-        vim.cmd('edit ' .. vim.fn.fnameescape(path))
+        vim.cmd("edit " .. vim.fn.fnameescape(path))
       else
-        vim.cmd('tabnew ' .. vim.fn.fnameescape(path))
+        vim.cmd("tabnew " .. vim.fn.fnameescape(path))
       end
 
       -- Always close Neo-tree window if open
       for _, win in ipairs(vim.api.nvim_list_wins()) do
         if vim.api.nvim_win_is_valid(win) then
           local buf = vim.api.nvim_win_get_buf(win)
-          if vim.api.nvim_buf_is_valid(buf) and vim.api.nvim_buf_get_option(buf, 'filetype') == 'neo-tree' then
+          if
+              vim.api.nvim_buf_is_valid(buf)
+              and vim.api.nvim_buf_get_option(buf, "filetype") == "neo-tree"
+          then
             vim.api.nvim_win_close(win, true)
           end
         end
       end
     end
 
-    require('neo-tree').setup {
+    require("neo-tree").setup({
       close_if_last_window = true,
-      popup_border_style = 'rounded',
+      popup_border_style = "rounded",
       enable_git_status = true,
       enable_diagnostics = true,
       default_component_configs = {
         indent = { padding = 1, indent_size = 2 },
-        icon = { folder_closed = '', folder_open = '', folder_empty = 'ﰊ' },
+        icon = { folder_closed = "", folder_open = "", folder_empty = "ﰊ" },
       },
       window = {
-        position = 'float',
+        position = "float",
         width = 40,
         mapping_options = { noremap = true, nowait = true },
         mappings = {
-          ['<cr>'] = smart_open,
-          ['t'] = 'noop',
+          ["<cr>"] = smart_open,
+          ["t"] = "noop",
         },
       },
       filesystem = {
         follow_current_file = true,
         use_libuv_file_watcher = true,
-        hijack_netrw_behavior = 'open_default',
+        hijack_netrw_behavior = "open_default",
         filtered_items = {
           visible = true,
           hide_dotfiles = false,
           hide_gitignored = true,
         },
       },
-    }
+    })
   end,
 }
