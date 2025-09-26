@@ -99,11 +99,15 @@ return {
         mapping_options = { noremap = true, nowait = true },
         mappings = {
           ["<cr>"] = smart_open,
+          ["h"] = "open_vsplit",
+          ["v"] = "open_split",
           ["t"] = "noop",
         },
       },
       filesystem = {
-        follow_current_file = true,
+        follow_current_file = {
+          enabled = true, -- updated to table format
+        },
         use_libuv_file_watcher = true,
         hijack_netrw_behavior = "open_default",
         filtered_items = {

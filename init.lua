@@ -325,8 +325,8 @@ vim.keymap.set('n', 'j', "v:count == 0 ? 'gj' : 'j'", { expr = true, silent = tr
 -- Diagnostic keymaps
 vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Go to previous diagnostic message' })
 vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next diagnostic message' })
---vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Open floating diagnostic message' })
---vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostics list' })
+vim.keymap.set('n', '<leader>de', vim.diagnostic.open_float, { desc = 'Diagnostics: floating message' })
+vim.keymap.set('n', '<leader>dq', vim.diagnostic.setloclist, { desc = 'Diagnostics: location list' })
 
 --[[ Custom keymaps ]]
 
@@ -401,6 +401,12 @@ end, { desc = 'Save & quit (prompt if new file)' })
 
 --Discard changes and Close current window
 vim.keymap.set('n', '<leader>qn', '<Cmd>q!<CR>')
+
+--Horizontal split
+vim.keymap.set('n', '<leader>sh', '<Cmd>split<CR>', { desc = 'Split [H]orizontal' })
+
+--Vertical split
+vim.keymap.set('n', '<leader>sv', '<Cmd>vsplit<CR>', { desc = 'Split [V]ertical' })
 
 --Switch below/right split windows
 vim.keymap.set('n', '<leader><Tab>', '<C-W><C-W>')
@@ -555,8 +561,17 @@ local function telescope_live_grep_open_files()
 end
 vim.keymap.set('n', '<leader>s/', telescope_live_grep_open_files, { desc = '[S]earch [/] in Open Files' })
 vim.keymap.set('n', '<leader>ss', require('telescope.builtin').builtin, { desc = '[S]earch [S]elect Telescope' })
-vim.keymap.set('n', '<leader>gf', require('telescope.builtin').git_files, { desc = 'Search [G]it [F]iles' })
-vim.keymap.set('n', '<leader>sh', require('telescope.builtin').help_tags, { desc = '[S]earch [H]elp' })
+vim.keymap.set('n', '<leader>gf', function()
+  local is_git_dir = vim.fn.system('git rev-parse --is-inside-work-tree'):gsub('%s+', '') == 'true'
+  if is_git_dir then
+    require('telescope.builtin').git_files()
+  else
+    vim.notify('Not a git repository', vim.log.levels.WARN, { title = 'Telescope Git Files' })
+    -- Optional: fallback to normal file search
+    -- require('telescope.builtin').find_files()
+  end
+end, { desc = 'Search [G]it [F]iles' })
+vim.keymap.set('n', '<leader>si', require('telescope.builtin').help_tags, { desc = '[S]earch [I]nfo' })
 vim.keymap.set('n', '<leader>sw', require('telescope.builtin').grep_string, { desc = '[S]earch current [W]ord' })
 vim.keymap.set('n', '<leader>sg', require('telescope.builtin').live_grep, { desc = '[S]earch by [G]rep' })
 vim.keymap.set('n', '<leader>sG', ':LiveGrepGitRoot<cr>', { desc = '[S]earch by [G]rep on Git Root' })
