@@ -402,12 +402,6 @@ end, { desc = 'Save & quit (prompt if new file)' })
 --Discard changes and Close current window
 vim.keymap.set('n', '<leader>qn', '<Cmd>q!<CR>')
 
---Horizontal split
-vim.keymap.set('n', '<leader>sh', '<Cmd>split<CR>', { desc = 'Split [H]orizontal' })
-
---Vertical split
-vim.keymap.set('n', '<leader>sv', '<Cmd>vsplit<CR>', { desc = 'Split [V]ertical' })
-
 --Switch below/right split windows
 vim.keymap.set('n', '<leader><Tab>', '<C-W><C-W>')
 
