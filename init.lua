@@ -40,9 +40,6 @@ require('lazy').setup({
   'tpope/vim-fugitive',
   'tpope/vim-rhubarb',
 
-  -- Detect tabstop and shiftwidth automatically
-  'tpope/vim-sleuth',
-
   -- NOTE: This is where your plugins related to LSP can be installed.
   --  The configuration is done below. Search for lspconfig to find it below.
   {
@@ -57,26 +54,40 @@ require('lazy').setup({
       {
         'stevearc/conform.nvim',
         opts = {
-          -- Set formatters per filetype
           formatters_by_ft = {
             lua = { 'stylua' },
-            python = { 'black', 'isort' },
-            javascript = { 'prettierd', 'prettier' },
-            typescript = { 'prettierd', 'prettier' },
-            css = { 'prettier' },
-            html = { 'prettier' },
-            json = { 'prettier' },
-            c = { 'clang-format' },
-            cpp = { 'clang-format' },
+            python = { 'isort', 'yapf' },
+            javascript = {
+              'prettierd',
+            },
+            typescript = {
+              'prettierd',
+            },
+            css = {
+              'prettierd',
+            },
+            html = {
+              'prettierd',
+            },
+            json = {
+              'prettierd',
+            },
+            c = {
+              'clang-format',
+            },
+            cpp = {
+              'clang-format',
+            },
             bash = { 'shfmt' },
             rust = { 'rustfmt' },
           },
           format_on_save = {
             timeout_ms = 500,
-            lsp_format = 'fallback', -- fall back to LSP if no external formatter
+            lsp_format = 'fallback',
           },
         },
       },
+      
       -- Install formatters automatically
       {
         'zapling/mason-conform.nvim',
@@ -311,6 +322,13 @@ vim.o.completeopt = 'menuone,noselect'
 
 -- NOTE: You should make sure your terminal supports this
 vim.o.termguicolors = true
+
+-- Tabs and indentation
+vim.o.expandtab = false  -- use spaces instead of tabs
+vim.o.shiftwidth = 4     -- number of spaces for autoindent
+vim.o.softtabstop = 0    -- number of spaces per Tab in insert mode
+vim.o.tabstop = 4        -- number of spaces a Tab counts for
+vim.o.smartindent = true -- auto-indent new lines
 
 -- [[ Basic Keymaps ]]
 
@@ -886,6 +904,92 @@ vim.api.nvim_create_autocmd({ 'TabClosed' }, {
     end
   end,
 })
+
+-- Auto-create config files for formatters (cross-platform)
+local uv = vim.loop
+local home = uv.os_homedir()
+local os_name = uv.os_uname().sysname
+local appdata = os.getenv("APPDATA") or (home .. "/AppData/Roaming")
+
+-- List of formatter configs
+local formatters = {
+  {
+    name = "clang-format",
+    path = (os_name:match("Windows") and home .. "\\.clang-format" or home .. "/.clang-format"),
+    content = [[
+BasedOnStyle: LLVM
+IndentWidth: 4
+TabWidth: 4
+UseTab: Always
+]]
+  },
+  {
+    name = "prettier",
+    path = (os_name:match("Windows") and appdata .. "\\Prettier\\.prettierrc" or home .. "/.prettierrc"),
+    content = [[
+{
+  "tabWidth": 4,
+  "useTabs": true,
+  "semi": true,
+  "singleQuote": true,
+  "trailingComma": "es5",
+  "printWidth": 100
+}
+]]
+  },
+  {
+    name = "yapf",
+    path = (os_name:match("Windows") and home .. "\\.style.yapf" or home .. "/.style.yapf"),
+    content = [[
+[style]
+based_on_style = pep8
+indent_width = 4
+use_tabs = True
+]]
+  },
+  {
+    name = "isort",
+    path = (os_name:match("Windows") and home .. "\\.isort.cfg" or home .. "/.isort.cfg"),
+    content = [[
+[settings]
+profile = black
+force_single_line = true
+]]
+  },
+}
+
+-- Helper to create file if it doesn't exist
+local function ensure_file(path, content)
+  if not path then
+    print("Invalid path, skipping file creation")
+    return
+  end
+
+  local stat = uv.fs_stat(path)
+  if not stat then
+    -- Make parent directory if needed
+    local dir = vim.fn.fnamemodify(path, ":h")
+    if vim.fn.isdirectory(dir) == 0 then
+      vim.fn.mkdir(dir, "p") -- recursively create directories
+      print("Created directory: " .. dir)
+    end
+
+    -- Write the file
+    local fd = uv.fs_open(path, "w", 420) -- 0644
+    if fd then
+      uv.fs_write(fd, content, -1)
+      uv.fs_close(fd)
+      print("Created file: " .. path)
+    else
+      print("Failed to create file: " .. path)
+    end
+  end
+end
+
+-- Loop through all formatter configs
+for _, fmt in ipairs(formatters) do
+  ensure_file(fmt.path, fmt.content)
+end
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
