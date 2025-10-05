@@ -346,12 +346,12 @@ vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next diagnos
 vim.keymap.set('n', '<leader>de', vim.diagnostic.open_float, { desc = 'Diagnostics: floating message' })
 vim.keymap.set('n', '<leader>dq', vim.diagnostic.setloclist, { desc = 'Diagnostics: location list' })
 
---[[ Custom keymaps ]]
+-- [[ Custom keymaps ]]
 
---Neo-tree sync to current directory & toggle
+-- Neo-tree sync to current directory & toggle
 vim.keymap.set('n', '<leader>n', '<Cmd>cd %:p:h | Neotree toggle float<CR>')
 
---Terminal open in new tab
+-- Terminal open in new tab
 vim.keymap.set('n', '<leader>t', '<Cmd>tabnew +term<CR>i')
 
 -- Create an empty buffer in a new tab
@@ -417,14 +417,20 @@ vim.keymap.set('n', '<leader>qy', function()
   end
 end, { desc = 'Save & quit (prompt if new file)' })
 
---Discard changes and Close current window
+-- Discard changes and Close current window
 vim.keymap.set('n', '<leader>qn', '<Cmd>q!<CR>')
 
---Switch below/right split windows
+-- Switch below/right split windows
 vim.keymap.set('n', '<leader><Tab>', '<C-W><C-W>')
 
---Switch above/left split windows
+-- Switch above/left split windows
 vim.keymap.set('n', '<Tab>', '<C-W>W')
+
+-- Select all and copy to clipboard
+vim.keymap.set('n', '<leader>y', 'ggVG"+y')
+
+-- Paste from clipboard
+vim.keymap.set('n', '<leader>p', '"+p')
 
 -- [[ Highlight on yank ]]
 -- See `:help vim.highlight.on_yank()`
