@@ -441,6 +441,48 @@ vim.keymap.set('v', 'Y', '"+y')
 -- Paste from clipboard
 vim.keymap.set('n', '<leader>p', '"+p')
 
+-- Smart open a file path, reusing empty buffers or tabs if possible
+local function smart_open_file(path)
+  if not path or path == '' then
+    return
+  end
+  path = vim.fn.fnamemodify(path, ':p') -- make absolute
+
+  -- 1. If file is already open → jump to it
+  for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
+    for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do
+      local buf = vim.api.nvim_win_get_buf(win)
+      if vim.api.nvim_buf_get_name(buf) == path then
+        vim.api.nvim_set_current_tabpage(tab)
+        vim.api.nvim_set_current_win(win)
+        return
+      end
+    end
+  end
+
+  -- 2. If current tab has an empty "No Name" buffer → reuse it
+  for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+    local buf = vim.api.nvim_win_get_buf(win)
+    local name = vim.api.nvim_buf_get_name(buf)
+    local buftype = vim.api.nvim_buf_get_option(buf, 'buftype')
+    local modified = vim.api.nvim_buf_get_option(buf, 'modified')
+    if name == '' and buftype == '' and not modified then
+      vim.api.nvim_set_current_win(win)
+      vim.cmd('edit ' .. vim.fn.fnameescape(path))
+      return
+    end
+  end
+
+  -- 3. Otherwise → open in a new tab
+  vim.cmd('tabedit ' .. vim.fn.fnameescape(path))
+end
+
+-- Remap gf to use smart_open_file
+vim.keymap.set('n', 'gf', function()
+  local path = vim.fn.expand '<cfile>' -- get file under cursor
+  smart_open_file(path)
+end, { desc = 'Smart gf: open file under cursor in new tab or reuse buffer' })
+
 -- [[ Highlight on yank ]]
 -- See `:help vim.highlight.on_yank()`
 local highlight_group = vim.api.nvim_create_augroup('YankHighlight', { clear = true })
@@ -590,14 +632,31 @@ vim.keymap.set('n', '<leader>s/', telescope_live_grep_open_files, { desc = '[S]e
 vim.keymap.set('n', '<leader>ss', require('telescope.builtin').builtin, { desc = '[S]earch [S]elect Telescope' })
 vim.keymap.set('n', '<leader>gf', function()
   local is_git_dir = vim.fn.system('git rev-parse --is-inside-work-tree'):gsub('%s+', '') == 'true'
-  if is_git_dir then
-    require('telescope.builtin').git_files()
-  else
+  if not is_git_dir then
     vim.notify('Not a git repository', vim.log.levels.WARN, { title = 'Telescope Git Files' })
-    -- Optional: fallback to normal file search
-    -- require('telescope.builtin').find_files()
+    return
   end
-end, { desc = 'Search [G]it [F]iles' })
+
+  require('telescope.builtin').git_files {
+    attach_mappings = function(_, map)
+      local actions = require 'telescope.actions'
+      local action_state = require 'telescope.actions.state'
+
+      local function open_smart(prompt_bufnr)
+        local entry = action_state.get_selected_entry()
+        if not entry then
+          return
+        end
+        pcall(actions.close, prompt_bufnr)
+        smart_open(prompt_bufnr)
+      end
+
+      map('i', '<CR>', open_smart)
+      map('n', '<CR>', open_smart)
+      return true
+    end,
+  }
+end, { desc = 'Search [G]it [F]iles (Smart Open)' })
 vim.keymap.set('n', '<leader>si', require('telescope.builtin').help_tags, { desc = '[S]earch [I]nfo' })
 vim.keymap.set('n', '<leader>sw', require('telescope.builtin').grep_string, { desc = '[S]earch current [W]ord' })
 vim.keymap.set('n', '<leader>sg', require('telescope.builtin').live_grep, { desc = '[S]earch by [G]rep' })
