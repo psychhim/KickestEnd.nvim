@@ -360,6 +360,20 @@ vim.keymap.set('n', '<Leader>e', function()
   vim.cmd 'enew'   -- create a new empty buffer in it
 end, { noremap = true, silent = true })
 
+-- Horizontal split with new empty buffer below
+vim.keymap.set('n', '<leader>sv', function()
+  vim.cmd('split')           -- create horizontal split (above by default)
+  vim.cmd('wincmd j')        -- move to the new split below
+  vim.cmd('enew')            -- open new empty buffer
+end, { desc = "New buffer in horizontal split (below)" })
+
+-- Vertical split with new empty buffer to the right
+vim.keymap.set('n', '<leader>sh', function()
+  vim.cmd('vsplit')          -- create vertical split (left by default)
+  vim.cmd('wincmd l')        -- move to the new split to the right
+  vim.cmd('enew')            -- open new empty buffer
+end, { desc = "New buffer in vertical split (right)" })
+
 -- Save current buffer (asks for filename if new/unsaved)
 vim.keymap.set('n', '<leader>w', function()
   if vim.api.nvim_buf_get_name(0) == '' then
