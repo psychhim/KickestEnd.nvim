@@ -426,8 +426,17 @@ vim.keymap.set('n', '<leader><Tab>', '<C-W><C-W>')
 -- Switch above/left split windows
 vim.keymap.set('n', '<Tab>', '<C-W>W')
 
+-- Select all
+vim.keymap.set('n', '<leader>ll', 'ggVG')
+
 -- Select all and copy to clipboard
-vim.keymap.set('n', '<leader>y', 'ggVG"+y')
+vim.keymap.set('n', '<leader>lY', 'ggVG"+y')
+
+-- Copy to clipboard a single line
+vim.keymap.set('n', 'Y', '"+yy')
+
+-- Copy to clipboard selected text in Visual mode
+vim.keymap.set('v', 'Y', '"+y')
 
 -- Paste from clipboard
 vim.keymap.set('n', '<leader>p', '"+p')
