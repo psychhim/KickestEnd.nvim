@@ -1210,5 +1210,20 @@ for _, fmt in ipairs(formatters) do
   ensure_file(fmt.path, fmt.content)
 end
 
+-- Auto-clear messages on most user actions
+local clear_msg_grp = vim.api.nvim_create_augroup('AutoClearMessages', { clear = true })
+
+vim.api.nvim_create_autocmd(
+{ 'CursorMoved', 'CursorMovedI', 'InsertEnter', 'InsertLeave', 'TextChanged', 'TextChangedI' }, {
+  group = clear_msg_grp,
+  callback = function()
+    vim.cmd 'echo ""' -- Clear the message/command line
+  end,
+})
+
+-- Auto-clear messages on pressing ESC
+vim.keymap.set('n', '<Esc>', '<Esc><Cmd>echo ""<CR>', { noremap = true, silent = true })
+vim.keymap.set('v', '<Esc>', '<Esc><Cmd>echo ""<CR>', { noremap = true, silent = true })
+
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
