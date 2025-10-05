@@ -641,6 +641,62 @@ local function smart_open(prompt_bufnr)
   vim.cmd('tabnew ' .. vim.fn.fnameescape(path))
 end
 
+-- Split option in Telescope file picker with smart_open
+local actions = require 'telescope.actions'
+local action_state = require 'telescope.actions.state'
+
+local function smart_open_split(prompt_bufnr, split_type)
+  local entry = action_state.get_selected_entry()
+  if not entry then
+    return
+  end
+
+  local path = entry.path or entry.filename
+  if not path then
+    return
+  end
+
+  if prompt_bufnr and vim.api.nvim_buf_is_valid(prompt_bufnr) then
+    pcall(actions.close, prompt_bufnr)
+  end
+
+  -- Check if file is already open
+  local open_tab, open_win
+  for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
+    for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do
+      local buf = vim.api.nvim_win_get_buf(win)
+      if vim.api.nvim_buf_get_name(buf) == path then
+        open_tab = tab
+        open_win = win
+        break
+      end
+    end
+    if open_tab then
+      break
+    end
+  end
+
+  if open_tab then
+    local choice = vim.fn.confirm('File is already open in another tab. Open split here anyway?', '&Yes\n&No', 2)
+    if choice ~= 1 then
+      -- User chose No → jump to the tab where file is open
+      vim.api.nvim_set_current_tabpage(open_tab)
+      vim.api.nvim_set_current_win(open_win)
+      return
+    end
+    -- Else user chose Yes → continue to open split in current tab
+  end
+
+  -- Open in split
+  if split_type == 'v' then
+    -- horizontal → always below
+    vim.cmd('belowright split ' .. vim.fn.fnameescape(path))
+  elseif split_type == 'h' then
+    -- vertical → always right
+    vim.cmd('vertical rightbelow split ' .. vim.fn.fnameescape(path))
+  end
+end
+
 -- Telescope keymap using Smart Open
 vim.keymap.set('n', '<leader>sf', function()
   require('telescope.builtin').find_files {
@@ -650,6 +706,14 @@ vim.keymap.set('n', '<leader>sf', function()
       end)
       map('n', '<CR>', function(prompt_bufnr)
         smart_open(prompt_bufnr)
+      end)
+      -- Horizontal split with 'h'
+      map('n', 'h', function(prompt_bufnr)
+        smart_open_split(prompt_bufnr, 'h')
+      end)
+      -- Vertical split with 'v'
+      map('n', 'v', function(prompt_bufnr)
+        smart_open_split(prompt_bufnr, 'v')
       end)
       return true
     end,
