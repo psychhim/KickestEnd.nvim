@@ -115,8 +115,7 @@ return {
 			end
 
 			if open_tab then
-				local choice = vim.fn.confirm('File is already open in another tab. Open split here anyway?', '&Yes\n&No',
-					2)
+				local choice = vim.fn.confirm('File is already open in a tab. Open split here anyway?', '&Yes\n&No', 2)
 				if choice ~= 1 then
 					-- User chose No → jump to the tab where file is open
 					vim.api.nvim_set_current_tabpage(open_tab)
