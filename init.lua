@@ -362,17 +362,17 @@ end, { noremap = true, silent = true })
 
 -- Horizontal split with new empty buffer below
 vim.keymap.set('n', '<leader>sv', function()
-  vim.cmd('split')           -- create horizontal split (above by default)
-  vim.cmd('wincmd j')        -- move to the new split below
-  vim.cmd('enew')            -- open new empty buffer
-end, { desc = "New buffer in horizontal split (below)" })
+  vim.cmd 'split'    -- create horizontal split (above by default)
+  vim.cmd 'wincmd j' -- move to the new split below
+  vim.cmd 'enew'     -- open new empty buffer
+end, { desc = 'New buffer in horizontal split (below)' })
 
 -- Vertical split with new empty buffer to the right
 vim.keymap.set('n', '<leader>sh', function()
-  vim.cmd('vsplit')          -- create vertical split (left by default)
-  vim.cmd('wincmd l')        -- move to the new split to the right
-  vim.cmd('enew')            -- open new empty buffer
-end, { desc = "New buffer in vertical split (right)" })
+  vim.cmd 'vsplit'   -- create vertical split (left by default)
+  vim.cmd 'wincmd l' -- move to the new split to the right
+  vim.cmd 'enew'     -- open new empty buffer
+end, { desc = 'New buffer in vertical split (right)' })
 
 -- Save current buffer (asks for filename if new/unsaved)
 vim.keymap.set('n', '<leader>w', function()
@@ -454,6 +454,73 @@ vim.keymap.set('v', 'Y', '"+y')
 
 -- Paste from clipboard
 vim.keymap.set('n', '<leader>p', '"+p')
+
+-- Redo
+vim.keymap.set('n', 'U', '<C-r>')
+
+-- Smart Open current buffers for Telescope (switch to already open buffer)
+local actions = require 'telescope.actions'
+local action_state = require 'telescope.actions.state'
+local builtin = require 'telescope.builtin'
+
+local function smart_open_buffer()
+  builtin.buffers {
+    attach_mappings = function(_, map)
+      local function open_selected(prompt_bufnr)
+        local entry = action_state.get_selected_entry()
+        if not entry then
+          return
+        end
+        actions.close(prompt_bufnr)
+
+        local bufname = vim.api.nvim_buf_get_name(entry.bufnr)
+        if bufname == '' then
+          return
+        end
+
+        -- Check all windows in current tab
+        local current_tab = vim.api.nvim_get_current_tabpage()
+        for _, win in ipairs(vim.api.nvim_tabpage_list_wins(current_tab)) do
+          local buf = vim.api.nvim_win_get_buf(win)
+          if vim.api.nvim_buf_get_name(buf) == bufname then
+            vim.api.nvim_set_current_win(win)
+            return
+          end
+        end
+
+        -- Check other tabs
+        for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
+          if tab ~= current_tab then
+            for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do
+              local buf = vim.api.nvim_win_get_buf(win)
+              if vim.api.nvim_buf_get_name(buf) == bufname then
+                -- Switch tab first, then window
+                vim.api.nvim_set_current_tabpage(tab)
+                vim.api.nvim_set_current_win(win)
+                return
+              end
+            end
+          end
+        end
+
+        -- Not open anywhere → open in current window
+        vim.cmd('buffer ' .. entry.bufnr)
+      end
+
+      map('i', '<CR>', open_selected)
+      map('n', '<CR>', open_selected)
+      return true
+    end,
+  }
+end
+
+-- Map to <leader><leader>
+vim.keymap.set('n', '<leader><leader>', smart_open_buffer, { desc = 'Switch to Open Buffers' })
+
+-- which-key, register it to show a description
+require('which-key').register {
+  ['<leader><leader>'] = { smart_open_buffer, 'Switch to Open Buffers' },
+}
 
 -- Smart open a file path, reusing empty buffers or tabs if possible
 local function smart_open_file(path)
