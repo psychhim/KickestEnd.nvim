@@ -6,7 +6,6 @@ vim.keymap.set('n', '<leader>j', '<C-d>zz', { desc = 'Scroll down and center cur
 vim.keymap.set('n', '<leader>k', '<C-u>zz', { desc = 'Scroll up and center cursor' })
 vim.keymap.set('n', 'n', 'nzzzv')
 vim.keymap.set('n', 'N', 'Nzzzv')
-vim.keymap.set('x', '<leader>p', '"_dP', { desc = 'Paste over selection without yanking' })
 
 -- [[ Replace all occurrences of the word under cursor ]]
 vim.keymap.set('n', '<leader>F', function()
@@ -158,26 +157,61 @@ vim.keymap.set('n', 'Y', function()
   vim.fn.setreg('+', line)
   vim.fn.setreg('*', line)
   vim.schedule(function()
-    vim.notify('Copied to clipboard', vim.log.levels.INFO)
+    vim.notify('Copied line to clipboard', vim.log.levels.INFO)
   end)
 end)
 -- Visual mode: copy selection, trim trailing newline if needed
 vim.keymap.set('x', 'Y', [["+y<esc>:lua require("copy_to_clipboard_fix").trim_clipboard()<CR>]])
 
--- [[ Paste from clipboard ]]
+-- [[ Paste from clipboard with line count ]]
 local function paste_from_clipboard()
+  local lines = vim.fn.getreg('+', 1, true)
+  local line_count = #lines
   local mode = vim.fn.mode()
-  if mode == 'v' or mode == 'V' or mode == '\22' then
-    -- Visual mode: paste without yanking selection
-    vim.cmd 'normal! "_d"+P'
+  if mode:match '[vV\22]' then
+    -- Visual mode: get selection range reliably
+    local start_line = math.min(vim.fn.getpos('v')[2], vim.fn.getpos('.')[2]) - 1
+    local end_line = math.max(vim.fn.getpos('v')[2], vim.fn.getpos('.')[2])
+    -- Replace selection
+    vim.api.nvim_buf_set_lines(0, start_line, end_line, false, lines)
+    -- Exit visual mode
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<Esc>', true, false, true), 'n', true)
+    -- Notify after visual mode exit
+    vim.schedule(function()
+      vim.notify(line_count .. ' line' .. (line_count > 1 and 's' or '') .. ' pasted from clipboard', vim.log.levels.INFO)
+    end)
   else
-    -- Normal mode: paste at cursor position
-    vim.cmd 'normal! "+P'
+    -- Normal mode: paste at cursor, characterwise
+    vim.api.nvim_put(lines, 'c', true, true)
+    -- Notify
+    vim.schedule(function()
+      vim.notify(line_count .. ' line' .. (line_count > 1 and 's' or '') .. ' pasted from clipboard', vim.log.levels.INFO)
+    end)
   end
 end
--- In normal and visual modes
-vim.keymap.set('n', '<leader>P', paste_from_clipboard, { desc = 'Paste from clipboard at cursor' })
-vim.keymap.set('x', '<leader>P', paste_from_clipboard, { desc = 'Paste from clipboard without yanking selection' })
+vim.keymap.set('n', '<leader>P', paste_from_clipboard, { desc = 'Paste from clipboard' })
+vim.keymap.set('x', '<leader>P', paste_from_clipboard, { desc = 'Paste from clipboard' })
+
+-- [[ Paste at cursor inline ]]
+vim.keymap.set('n', '<leader>p', function()
+  -- Get unnamed register
+  local content = vim.fn.getreg '"'
+  if content == '' then
+    return
+  end
+  -- Flatten multi-line content into a single string
+  content = content:gsub('\n', '') -- remove all newlines
+  -- Insert inline at cursor
+  local row, col = unpack(vim.api.nvim_win_get_cursor(0))
+  local line = vim.api.nvim_get_current_line()
+  local new_line = line:sub(1, col) .. content .. line:sub(col + 1)
+  vim.api.nvim_set_current_line(new_line)
+  -- Move cursor to end of pasted text
+  vim.api.nvim_win_set_cursor(0, { row, col + #content })
+end, { desc = 'Paste at cursor inline' })
+
+-- [ In Visual Mode, paste over selection without yanking ]
+vim.keymap.set('x', '<leader>p', '"_dP', { desc = 'Paste over selection without yanking' })
 
 -- [[ Redo ]]
 vim.keymap.set('n', 'U', '<C-r>')
