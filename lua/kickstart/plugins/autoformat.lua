@@ -6,6 +6,11 @@
 return {
   'neovim/nvim-lspconfig',
   config = function()
+    -- Skip setting up LSP autoformatting if conform.nvim is being used
+    if package.loaded['conform'] then
+      return
+    end
+
     -- Switch for controlling whether you want autoformatting.
     --  Use :KickstartFormatToggle to toggle autoformatting on or off
     local format_is_enabled = true

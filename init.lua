@@ -86,6 +86,10 @@ require('lazy').setup({
             lsp_format = 'fallback',
           },
         },
+        -- format without saving
+        vim.keymap.set('n', '<leader>f', function()
+          require('conform').format { async = true }
+        end, { desc = 'Format buffer' }),
       },
 
       -- Install formatters automatically
@@ -125,7 +129,7 @@ require('lazy').setup({
   },
 
   -- Useful plugin to show you pending keybinds.
-  { 'folke/which-key.nvim',  opts = {} },
+  { 'folke/which-key.nvim', opts = {} },
   {
     -- Adds git related signs to the gutter, as well as utilities for managing changes
     'lewis6991/gitsigns.nvim',
@@ -227,31 +231,8 @@ require('lazy').setup({
     main = 'ibl',
     opts = {},
   },
-
   -- "gc" to comment visual regions/lines
   { 'numToStr/Comment.nvim', opts = {} },
-
-  -- Fuzzy Finder (files, lsp, etc)
-  {
-    'nvim-telescope/telescope.nvim',
-    branch = '0.1.x',
-    dependencies = {
-      'nvim-lua/plenary.nvim',
-      -- Fuzzy Finder Algorithm which requires local dependencies to be built.
-      -- Only load if `make` is available. Make sure you have the system
-      -- requirements installed.
-      {
-        'nvim-telescope/telescope-fzf-native.nvim',
-        -- NOTE: If you are having trouble with this installation,
-        --       refer to the README for telescope-fzf-native for more instructions.
-        build = 'make',
-        cond = function()
-          return vim.fn.executable 'make' == 1
-        end,
-      },
-    },
-  },
-
   {
     -- Highlight, edit, and navigate code
     'nvim-treesitter/nvim-treesitter',
@@ -282,21 +263,28 @@ require('lazy').setup({
   { import = 'custom.plugins' },
 }, {})
 
+-- custom/keymaps.lua file
+require 'keymaps'
+
 -- [[ Setting options ]]
 -- See `:help vim.o`
--- NOTE: You can change these options as you wish!
 
 -- Set highlight on search
 vim.o.hlsearch = false
 
 -- Make line numbers default
-vim.wo.number = true
+vim.opt.number = true
+
+-- Relative line number
+vim.opt.relativenumber = true
 
 -- Enable mouse mode
 vim.o.mouse = ''
 
+-- Always keep a distance of the cursor to the top and bottom of the screen
+vim.opt.scrolloff = 8
+
 -- Sync clipboard between OS and Neovim.
---  Remove this option if you want your OS clipboard to remain independent.
 --  See `:help 'clipboard'`
 -- vim.o.clipboard = 'unnamedplus'
 
@@ -324,245 +312,11 @@ vim.o.completeopt = 'menuone,noselect'
 vim.o.termguicolors = true
 
 -- Tabs and indentation
-vim.o.expandtab = false  -- use spaces instead of tabs
-vim.o.shiftwidth = 4     -- number of spaces for autoindent
-vim.o.softtabstop = 0    -- number of spaces per Tab in insert mode
-vim.o.tabstop = 4        -- number of spaces a Tab counts for
+vim.o.expandtab = false -- use spaces instead of tabs
+vim.o.shiftwidth = 4 -- number of spaces for autoindent
+vim.o.softtabstop = 0 -- number of spaces per Tab in insert mode
+vim.o.tabstop = 4 -- number of spaces a Tab counts for
 vim.o.smartindent = true -- auto-indent new lines
-
--- [[ Basic Keymaps ]]
-
--- Keymaps for better default experience
--- See `:help vim.keymap.set()`
-vim.keymap.set({ 'n', 'v' }, '<Space>', '<Nop>', { silent = true })
-
--- Remap for dealing with word wrap
-vim.keymap.set('n', 'k', "v:count == 0 ? 'gk' : 'k'", { expr = true, silent = true })
-vim.keymap.set('n', 'j', "v:count == 0 ? 'gj' : 'j'", { expr = true, silent = true })
-
--- Diagnostic keymaps
-vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Go to previous diagnostic message' })
-vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next diagnostic message' })
-vim.keymap.set('n', '<leader>de', vim.diagnostic.open_float, { desc = 'Diagnostics: floating message' })
-vim.keymap.set('n', '<leader>dq', vim.diagnostic.setloclist, { desc = 'Diagnostics: location list' })
-
--- [[ Custom keymaps ]]
-
--- Neo-tree sync to current directory & toggle
-vim.keymap.set('n', '<leader>n', '<Cmd>cd %:p:h | Neotree toggle float<CR>')
-
--- Terminal open in new tab
-vim.keymap.set('n', '<leader>t', '<Cmd>tabnew +term<CR>i')
-
--- Create an empty buffer in a new tab
-vim.keymap.set('n', '<Leader>e', function()
-  vim.cmd 'tabnew' -- create a new tab
-  vim.cmd 'enew'   -- create a new empty buffer in it
-end, { noremap = true, silent = true })
-
--- Horizontal split with new empty buffer below
-vim.keymap.set('n', '<leader>sv', function()
-  vim.cmd 'split'    -- create horizontal split (above by default)
-  vim.cmd 'wincmd j' -- move to the new split below
-  vim.cmd 'enew'     -- open new empty buffer
-end, { desc = 'New buffer in horizontal split (below)' })
-
--- Vertical split with new empty buffer to the right
-vim.keymap.set('n', '<leader>sh', function()
-  vim.cmd 'vsplit'   -- create vertical split (left by default)
-  vim.cmd 'wincmd l' -- move to the new split to the right
-  vim.cmd 'enew'     -- open new empty buffer
-end, { desc = 'New buffer in vertical split (right)' })
-
--- Save current buffer (asks for filename if new/unsaved)
-vim.keymap.set('n', '<leader>w', function()
-  if vim.api.nvim_buf_get_name(0) == '' then
-    -- Ask user for a filename
-    local filename = vim.fn.input('Save as: ', '', 'file')
-    if filename ~= '' then
-      vim.cmd('saveas ' .. vim.fn.fnameescape(filename))
-    else
-      print 'Save cancelled'
-    end
-  else
-    vim.cmd 'w'
-  end
-end, { desc = 'Save buffer (prompt if new file)' })
-
--- Close current window (asks if buffer is unsaved)
-vim.keymap.set('n', '<leader>q', function()
-  if vim.bo.modified then
-    local choice = vim.fn.input 'Buffer modified! Save (y), Discard (n), Cancel (any other key)? '
-    if choice:lower() == 'y' then
-      if vim.api.nvim_buf_get_name(0) == '' then
-        local filename = vim.fn.input('Save as: ', '', 'file')
-        if filename ~= '' then
-          vim.cmd('saveas ' .. vim.fn.fnameescape(filename))
-          vim.cmd 'q'
-        else
-          print 'Save cancelled'
-        end
-      else
-        vim.cmd 'wq'
-      end
-    elseif choice:lower() == 'n' then
-      vim.cmd 'q!'
-    else
-      print 'Quit cancelled'
-    end
-  else
-    vim.cmd 'q'
-  end
-end, { desc = 'Close buffer (prompt if modified)' })
-
--- Save changes and close current window (asks for filename if new/unsaved)
-vim.keymap.set('n', '<leader>qy', function()
-  if vim.api.nvim_buf_get_name(0) == '' then
-    -- Ask user for a filename
-    local filename = vim.fn.input('Save as: ', '', 'file')
-    if filename ~= '' then
-      vim.cmd('saveas ' .. vim.fn.fnameescape(filename))
-      vim.cmd 'q'
-    else
-      print 'Save cancelled'
-    end
-  else
-    vim.cmd 'wq'
-  end
-end, { desc = 'Save & quit (prompt if new file)' })
-
--- Discard changes and Close current window
-vim.keymap.set('n', '<leader>qn', '<Cmd>q!<CR>')
-
--- Switch below/right split windows
-vim.keymap.set('n', '<leader><Tab>', '<C-W><C-W>')
-
--- Switch above/left split windows
-vim.keymap.set('n', '<Tab>', '<C-W>W')
-
--- Select all
-vim.keymap.set('n', '<leader>ll', 'ggVG')
-
--- Select all and copy to clipboard
-vim.keymap.set('n', '<leader>lY', 'ggVG"+y')
-
--- Copy to clipboard a single line
-vim.keymap.set('n', 'Y', '"+yy')
-
--- Copy to clipboard selected text in Visual mode
-vim.keymap.set('v', 'Y', '"+y')
-
--- Paste from clipboard
-vim.keymap.set('n', '<leader>p', '"+p')
-
--- Redo
-vim.keymap.set('n', 'U', '<C-r>')
-
--- Smart Open current buffers for Telescope (switch to already open buffer)
-local actions = require 'telescope.actions'
-local action_state = require 'telescope.actions.state'
-local builtin = require 'telescope.builtin'
-
-local function smart_open_buffer()
-  builtin.buffers {
-    attach_mappings = function(_, map)
-      local function open_selected(prompt_bufnr)
-        local entry = action_state.get_selected_entry()
-        if not entry then
-          return
-        end
-        actions.close(prompt_bufnr)
-
-        local bufname = vim.api.nvim_buf_get_name(entry.bufnr)
-        if bufname == '' then
-          return
-        end
-
-        -- Check all windows in current tab
-        local current_tab = vim.api.nvim_get_current_tabpage()
-        for _, win in ipairs(vim.api.nvim_tabpage_list_wins(current_tab)) do
-          local buf = vim.api.nvim_win_get_buf(win)
-          if vim.api.nvim_buf_get_name(buf) == bufname then
-            vim.api.nvim_set_current_win(win)
-            return
-          end
-        end
-
-        -- Check other tabs
-        for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
-          if tab ~= current_tab then
-            for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do
-              local buf = vim.api.nvim_win_get_buf(win)
-              if vim.api.nvim_buf_get_name(buf) == bufname then
-                -- Switch tab first, then window
-                vim.api.nvim_set_current_tabpage(tab)
-                vim.api.nvim_set_current_win(win)
-                return
-              end
-            end
-          end
-        end
-
-        -- Not open anywhere → open in current window
-        vim.cmd('buffer ' .. entry.bufnr)
-      end
-
-      map('i', '<CR>', open_selected)
-      map('n', '<CR>', open_selected)
-      return true
-    end,
-  }
-end
-
--- Map to <leader><leader>
-vim.keymap.set('n', '<leader><leader>', smart_open_buffer, { desc = 'Switch to Open Buffers' })
-
--- which-key, register it to show a description
-require('which-key').register {
-  ['<leader><leader>'] = { smart_open_buffer, 'Switch to Open Buffers' },
-}
-
--- Smart open a file path, reusing empty buffers or tabs if possible
-local function smart_open_file(path)
-  if not path or path == '' then
-    return
-  end
-  path = vim.fn.fnamemodify(path, ':p') -- make absolute
-
-  -- 1. If file is already open → jump to it
-  for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
-    for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do
-      local buf = vim.api.nvim_win_get_buf(win)
-      if vim.api.nvim_buf_get_name(buf) == path then
-        vim.api.nvim_set_current_tabpage(tab)
-        vim.api.nvim_set_current_win(win)
-        return
-      end
-    end
-  end
-
-  -- 2. If current tab has an empty "No Name" buffer → reuse it
-  for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-    local buf = vim.api.nvim_win_get_buf(win)
-    local name = vim.api.nvim_buf_get_name(buf)
-    local buftype = vim.api.nvim_buf_get_option(buf, 'buftype')
-    local modified = vim.api.nvim_buf_get_option(buf, 'modified')
-    if name == '' and buftype == '' and not modified then
-      vim.api.nvim_set_current_win(win)
-      vim.cmd('edit ' .. vim.fn.fnameescape(path))
-      return
-    end
-  end
-
-  -- 3. Otherwise → open in a new tab
-  vim.cmd('tabedit ' .. vim.fn.fnameescape(path))
-end
-
--- Remap gf to use smart_open_file
-vim.keymap.set('n', 'gf', function()
-  local path = vim.fn.expand '<cfile>' -- get file under cursor
-  smart_open_file(path)
-end, { desc = 'Smart gf: open file under cursor in new tab or reuse buffer' })
 
 -- [[ Highlight on yank ]]
 -- See `:help vim.highlight.on_yank()`
@@ -574,240 +328,6 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   group = highlight_group,
   pattern = '*',
 })
-
--- [[ Configure Telescope ]]
--- See `:help telescope` and `:help telescope.setup()`
-require('telescope').setup {
-  defaults = {
-    mappings = {
-      i = {
-        ['<C-u>'] = false,
-        ['<C-d>'] = false,
-      },
-    },
-  },
-}
-
--- Enable telescope fzf native, if installed
-pcall(require('telescope').load_extension, 'fzf')
-
--- smart_open function for Telescope to check if the current tab has an empty "No Name" buffer. If it has, it replaces the empty buffer and open a file in the same tab
-local actions = require 'telescope.actions'
-local action_state = require 'telescope.actions.state'
-
-local function smart_open(prompt_bufnr)
-  local entry = action_state.get_selected_entry()
-  if not entry then
-    return
-  end
-
-  local path = entry.path or entry.filename
-  if not path then
-    return
-  end
-
-  if prompt_bufnr and vim.api.nvim_buf_is_valid(prompt_bufnr) then
-    pcall(actions.close, prompt_bufnr)
-  end
-
-  -- 1. If file is already open → jump to it
-  local tabpages = vim.api.nvim_list_tabpages()
-  for _, tab in ipairs(tabpages) do
-    for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do
-      local buf = vim.api.nvim_win_get_buf(win)
-      if vim.api.nvim_buf_get_name(buf) == path then
-        vim.api.nvim_set_current_tabpage(tab) -- jump to tab
-        vim.api.nvim_set_current_win(win)     -- jump to window
-        return
-      end
-    end
-  end
-
-  -- 2. If current tab has an empty "No Name" buffer → reuse it
-  local wins = vim.api.nvim_tabpage_list_wins(0)
-  for _, win in ipairs(wins) do
-    local buf = vim.api.nvim_win_get_buf(win)
-    local name = vim.api.nvim_buf_get_name(buf)
-    local buftype = vim.api.nvim_buf_get_option(buf, 'buftype')
-    local modified = vim.api.nvim_buf_get_option(buf, 'modified')
-    if name == '' and buftype == '' and not modified then
-      vim.api.nvim_set_current_win(win)
-      vim.cmd('edit ' .. vim.fn.fnameescape(path))
-      return
-    end
-  end
-
-  -- 3. Otherwise → open in a new tab
-  vim.cmd('tabnew ' .. vim.fn.fnameescape(path))
-end
-
--- Split option in Telescope file picker with smart_open
-local actions = require 'telescope.actions'
-local action_state = require 'telescope.actions.state'
-
-local function smart_open_split(prompt_bufnr, split_type)
-  local entry = action_state.get_selected_entry()
-  if not entry then
-    return
-  end
-
-  local path = entry.path or entry.filename
-  if not path then
-    return
-  end
-
-  if prompt_bufnr and vim.api.nvim_buf_is_valid(prompt_bufnr) then
-    pcall(actions.close, prompt_bufnr)
-  end
-
-  -- Check if file is already open
-  local open_tab, open_win
-  for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
-    for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do
-      local buf = vim.api.nvim_win_get_buf(win)
-      if vim.api.nvim_buf_get_name(buf) == path then
-        open_tab = tab
-        open_win = win
-        break
-      end
-    end
-    if open_tab then
-      break
-    end
-  end
-
-  if open_tab then
-    local choice = vim.fn.confirm('File is already open in a tab. Open split here anyway?', '&Yes\n&No', 2)
-    if choice ~= 1 then
-      -- User chose No → jump to the tab where file is open
-      vim.api.nvim_set_current_tabpage(open_tab)
-      vim.api.nvim_set_current_win(open_win)
-      return
-    end
-    -- Else user chose Yes → continue to open split in current tab
-  end
-
-  -- Open in split
-  if split_type == 'v' then
-    -- horizontal → always below
-    vim.cmd('belowright split ' .. vim.fn.fnameescape(path))
-  elseif split_type == 'h' then
-    -- vertical → always right
-    vim.cmd('vertical rightbelow split ' .. vim.fn.fnameescape(path))
-  end
-end
-
--- Telescope keymap using Smart Open
-vim.keymap.set('n', '<leader>sf', function()
-  require('telescope.builtin').find_files {
-    attach_mappings = function(_, map)
-      map('i', '<CR>', function(prompt_bufnr)
-        smart_open(prompt_bufnr)
-      end)
-      map('n', '<CR>', function(prompt_bufnr)
-        smart_open(prompt_bufnr)
-      end)
-      -- Horizontal split with 'h'
-      map('n', 'h', function(prompt_bufnr)
-        smart_open_split(prompt_bufnr, 'h')
-      end)
-      -- Vertical split with 'v'
-      map('n', 'v', function(prompt_bufnr)
-        smart_open_split(prompt_bufnr, 'v')
-      end)
-      return true
-    end,
-  }
-end, { desc = '[S]earch [F]iles (Smart Open)' })
-
--- Telescope live_grep in git root
--- Function to find the git root directory based on the current buffer's path
-local function find_git_root()
-  -- Use the current buffer's path as the starting point for the git search
-  local current_file = vim.api.nvim_buf_get_name(0)
-  local current_dir
-  local cwd = vim.fn.getcwd()
-  -- If the buffer is not associated with a file, return nil
-  if current_file == '' then
-    current_dir = cwd
-  else
-    -- Extract the directory from the current file's path
-    current_dir = vim.fn.fnamemodify(current_file, ':h')
-  end
-
-  -- Find the Git root directory from the current file's path
-  local git_root = vim.fn.systemlist('git -C ' .. vim.fn.escape(current_dir, ' ') .. ' rev-parse --show-toplevel')[1]
-  if vim.v.shell_error ~= 0 then
-    print 'Not a git repository. Searching on current working directory'
-    return cwd
-  end
-  return git_root
-end
-
--- Custom live_grep function to search in git root
-local function live_grep_git_root()
-  local git_root = find_git_root()
-  if git_root then
-    require('telescope.builtin').live_grep {
-      search_dirs = { git_root },
-    }
-  end
-end
-
-vim.api.nvim_create_user_command('LiveGrepGitRoot', live_grep_git_root, {})
-
--- See `:help telescope.builtin`
-vim.keymap.set('n', '<leader>?', require('telescope.builtin').oldfiles, { desc = '[?] Find recently opened files' })
-vim.keymap.set('n', '<leader><space>', require('telescope.builtin').buffers, { desc = '[ ] Find existing buffers' })
-vim.keymap.set('n', '<leader>/', function()
-  -- You can pass additional configuration to telescope to change theme, layout, etc.
-  require('telescope.builtin').current_buffer_fuzzy_find(require('telescope.themes').get_dropdown {
-    winblend = 10,
-    previewer = false,
-  })
-end, { desc = '[/] Fuzzily search in current buffer' })
-
-local function telescope_live_grep_open_files()
-  require('telescope.builtin').live_grep {
-    grep_open_files = true,
-    prompt_title = 'Live Grep in Open Files',
-  }
-end
-vim.keymap.set('n', '<leader>s/', telescope_live_grep_open_files, { desc = '[S]earch [/] in Open Files' })
-vim.keymap.set('n', '<leader>ss', require('telescope.builtin').builtin, { desc = '[S]earch [S]elect Telescope' })
-vim.keymap.set('n', '<leader>gf', function()
-  local is_git_dir = vim.fn.system('git rev-parse --is-inside-work-tree'):gsub('%s+', '') == 'true'
-  if not is_git_dir then
-    vim.notify('Not a git repository', vim.log.levels.WARN, { title = 'Telescope Git Files' })
-    return
-  end
-
-  require('telescope.builtin').git_files {
-    attach_mappings = function(_, map)
-      local actions = require 'telescope.actions'
-      local action_state = require 'telescope.actions.state'
-
-      local function open_smart(prompt_bufnr)
-        local entry = action_state.get_selected_entry()
-        if not entry then
-          return
-        end
-        pcall(actions.close, prompt_bufnr)
-        smart_open(prompt_bufnr)
-      end
-
-      map('i', '<CR>', open_smart)
-      map('n', '<CR>', open_smart)
-      return true
-    end,
-  }
-end, { desc = 'Search [G]it [F]iles (Smart Open)' })
-vim.keymap.set('n', '<leader>si', require('telescope.builtin').help_tags, { desc = '[S]earch [I]nfo' })
-vim.keymap.set('n', '<leader>sw', require('telescope.builtin').grep_string, { desc = '[S]earch current [W]ord' })
-vim.keymap.set('n', '<leader>sg', require('telescope.builtin').live_grep, { desc = '[S]earch by [G]rep' })
-vim.keymap.set('n', '<leader>sG', ':LiveGrepGitRoot<cr>', { desc = '[S]earch by [G]rep on Git Root' })
-vim.keymap.set('n', '<leader>sd', require('telescope.builtin').diagnostics, { desc = '[S]earch [D]iagnostics' })
-vim.keymap.set('n', '<leader>sr', require('telescope.builtin').resume, { desc = '[S]earch [R]esume' })
 
 -- [[ Configure Treesitter ]]
 -- See `:help nvim-treesitter`
@@ -948,10 +468,8 @@ require('mason-lspconfig').setup()
 
 -- Enable the following language servers
 --  Feel free to add/remove any LSPs that you want here. They will automatically be installed.
---
 --  Add any additional override configuration in the following tables. They will be passed to
 --  the `settings` field of the server config. You must look up that documentation yourself.
---
 --  If you want to override the default filetypes that your language server will attach to you can
 --  define the property 'filetypes' to the map in question.
 local servers = {
@@ -981,10 +499,6 @@ capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
 
 -- Ensure the servers above are installed
 local mason_lspconfig = require 'mason-lspconfig'
-
-mason_lspconfig.setup {
-  ensure_installed = vim.tbl_keys(servers),
-}
 
 mason_lspconfig.setup {
   ensure_installed = vim.tbl_keys(servers),
@@ -1213,8 +727,7 @@ end
 -- Auto-clear messages on most user actions
 local clear_msg_grp = vim.api.nvim_create_augroup('AutoClearMessages', { clear = true })
 
-vim.api.nvim_create_autocmd(
-{ 'CursorMoved', 'CursorMovedI', 'InsertEnter', 'InsertLeave', 'TextChanged', 'TextChangedI' }, {
+vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI', 'InsertEnter', 'InsertLeave', 'TextChanged', 'TextChangedI' }, {
   group = clear_msg_grp,
   callback = function()
     vim.cmd 'echo ""' -- Clear the message/command line
