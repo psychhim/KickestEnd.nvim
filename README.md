@@ -1,4 +1,4 @@
-# kickstart.nvim
+# KickestEnd.nvim
 
 ## Neovim Custom Keymaps
 
