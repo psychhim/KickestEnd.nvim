@@ -258,7 +258,6 @@ require('lazy').setup({
 	--    You can use this folder to prevent any conflicts with this init.lua if you're interested in keeping
 	--    up-to-date with whatever is in the kickstart repo.
 	--    Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
-	--
 	--    For additional information see: https://github.com/folke/lazy.nvim#-structuring-your-plugins
 	{ import = 'custom.plugins' },
 }, {})
