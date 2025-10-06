@@ -1,86 +1,59 @@
 # kickstart.nvim
 
-
-Neovim Custom Keymaps
-
+## Neovim Custom Keymaps
 
 A collection of custom keymaps for Neovim aimed at improving productivity, navigation, and clipboard management. These keymaps are written in Lua for Neovim ≥0.7 and include enhanced visual/normal mode operations, smart buffer/file handling, and more.
 
+---
 
-Features
+## Features
 
+### Navigation
 
-[[ Navigation ]]
+- Smooth scrolling with centered cursor: `<leader>j` / `<leader>k`
+- Enhanced search: `n` / `N` keeps cursor centered
+- Move lines visually: `J` / `K` in visual mode
+- Switch between splits quickly: `<leader><Tab>` / `<Tab>`
 
+### Buffer & File Management
 
-Smooth scrolling with centered cursor: <leader>j / <leader>k
+- Smart buffer switch using Telescope: `<leader><leader>`
+- Smart file open (`gf`) reuses empty buffers or opens in a new tab
+- Create new empty buffers in splits or tabs:
+  - Horizontal: `<leader>sv`
+  - Vertical: `<leader>sh`
+  - New tab: `<leader>e`
+- Save buffers safely:
+  - `<leader>w` — Save current buffer (prompts if new)
+  - `<leader>qy` — Save and quit
+  - `<leader>qn` — Quit without saving
 
-Enhanced search: n / N keeps cursor centered
+### Clipboard & Copying
 
-Move lines visually: J / K in visual mode
+- Copy current line: `Y` (normal mode)
+- Copy selection: `Y` (visual mode, trims extra newlines)
+- Select all and copy: `<leader>lY` (entire buffer without trailing newline)
+- Paste from clipboard: `<leader>P` (at cursor, or over selection without yanking it)
+- Notifications when content is copied to clipboard
 
-Switch between splits quickly: <leader><Tab> / <Tab>
+### Diagnostics
 
+- `[d` / `]d` — Navigate diagnostics
+- `<leader>de` — Open diagnostic floating window
+- `<leader>dq` — Set location list for diagnostics
 
-[[ Buffer & File Management ]]
+### Misc
 
-Smart buffer switch using Telescope: <leader><leader>
+- Reselect last visual selection after moving lines
+- Better word wrap handling: `j` / `k` intelligently move through wrapped lines
+- Smart `J` in normal mode joins lines without moving cursor
+- Paste over selection without yanking replaced text: `<leader>p`
 
-Smart file open (gf) reuses empty buffers or opens in a new tab
+---
 
-Create new empty buffers in splits or tabs:
+## Keymaps Overview
 
-Horizontal: <leader>sv
-
-Vertical: <leader>sh
-
-New tab: <leader>e
-
-Save buffers safely:
-
-<leader>w — Save current buffer (prompts if new)
-
-<leader>qy — Save and quit
-
-<leader>qn — Quit without saving
-
-
-[[ Clipboard & Copying ]]
-
-Copy current line: Y (normal mode)
-
-Copy selection: Y (visual mode, trims extra newlines)
-
-Select all and copy: <leader>lY (entire buffer without trailing newline)
-
-Paste from clipboard: <leader>P (at cursor, or over selection without yanking it)
-
-Notifications when content is copied to clipboard
-
-
-[[ Diagnostics ]]
-
-[d] / ]d — Navigate diagnostics
-
-<leader>de — Open diagnostic floating window
-
-<leader>dq — Set location list for diagnostics
-
-
-[[ Misc ]]
-
-Reselect last visual selection after moving lines
-
-Better word wrap handling: j / k intelligently move through wrapped lines
-
-Smart J in normal mode joins lines without moving cursor
-
-Paste over selection without yanking replaced text: <leader>p
-
-
-Keymaps Overview
-
-Normal Mode Keymaps:
+### Normal Mode Keymaps
 
 | Key                | Action              | Description                                                      |
 | ------------------ | ------------------- | ---------------------------------------------------------------- |
@@ -97,8 +70,7 @@ Normal Mode Keymaps:
 | `<leader><leader>` | Smart buffer switch | Open Telescope buffer switcher                                   |
 | `gf`               | Smart file open     | Open file under cursor in current/new tab                        |
 
-
-Visual Mode Keymaps:
+### Visual Mode Keymaps
 
 | Key         | Action         | Description                                               |
 | ----------- | -------------- | --------------------------------------------------------- |
@@ -107,8 +79,7 @@ Visual Mode Keymaps:
 | `<leader>p` | Paste          | Paste over selection without yanking replaced text        |
 | `<leader>P` | Paste          | Paste from clipboard without replacing selection          |
 
-
-Split/Window Management:
+### Split/Window Management
 
 | Key             | Action           | Description                    |
 | --------------- | ---------------- | ------------------------------ |
@@ -118,8 +89,7 @@ Split/Window Management:
 | `<leader><Tab>` | Switch splits    | Switch to next window          |
 | `<Tab>`         | Switch splits    | Switch to previous window      |
 
-
-Diagnostics Keymaps:
+### Diagnostics Keymaps
 
 | Key          | Action        | Description                                |
 | ------------ | ------------- | ------------------------------------------ |
@@ -127,12 +97,13 @@ Diagnostics Keymaps:
 | `<leader>de` | Float         | Show diagnostic message in floating window |
 | `<leader>dq` | Location list | Set location list for diagnostics          |
 
+---
 
-Contributing
+## Contributing
 
 Contributions, bug reports, and suggestions are welcome. Please open an issue or submit a pull request if you have improvements for keymaps, new features, or optimizations.
 
-License
+## License
 
 MIT License — feel free to use and modify these keymaps in your own Neovim setup.
 
