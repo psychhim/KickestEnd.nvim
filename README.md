@@ -1,6 +1,5 @@
 # kickstart.nvim
 
-https://github.com/kdheepak/kickstart.nvim/assets/1813121/f3ff9a2b-c31f-44df-a4fa-8a0d7b17cf7b
 
 Neovim Custom Keymaps
 
@@ -13,6 +12,7 @@ Features
 
 [[ Navigation ]]
 
+
 Smooth scrolling with centered cursor: <leader>j / <leader>k
 
 Enhanced search: n / N keeps cursor centered
@@ -20,6 +20,7 @@ Enhanced search: n / N keeps cursor centered
 Move lines visually: J / K in visual mode
 
 Switch between splits quickly: <leader><Tab> / <Tab>
+
 
 [[ Buffer & File Management ]]
 
@@ -43,6 +44,7 @@ Save buffers safely:
 
 <leader>qn — Quit without saving
 
+
 [[ Clipboard & Copying ]]
 
 Copy current line: Y (normal mode)
@@ -55,6 +57,7 @@ Paste from clipboard: <leader>P (at cursor, or over selection without yanking it
 
 Notifications when content is copied to clipboard
 
+
 [[ Diagnostics ]]
 
 [d] / ]d — Navigate diagnostics
@@ -62,6 +65,7 @@ Notifications when content is copied to clipboard
 <leader>de — Open diagnostic floating window
 
 <leader>dq — Set location list for diagnostics
+
 
 [[ Misc ]]
 
