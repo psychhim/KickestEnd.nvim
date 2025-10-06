@@ -9,19 +9,19 @@ vim.keymap.set('n', 'N', 'Nzzzv')
 
 -- [[ Replace all occurrences of the word under cursor ]]
 vim.keymap.set('n', '<leader>F', function()
-  -- Save current cursor position
-  local pos = vim.api.nvim_win_get_cursor(0)
-  -- Get the word under the cursor
-  local word = vim.fn.expand '<cword>'
-  -- Ask user for the replacement
-  local replacement = vim.fn.input("Replace '" .. word .. "' with: ")
-  -- If user typed something, do the substitution
-  if replacement ~= '' then
-    -- %%s/.../.../gI = substitute globally, case-insensitive
-    vim.cmd(string.format('%%s/\\<%s\\>/%s/gI', word, replacement))
-  end
-  -- Restore cursor position
-  vim.api.nvim_win_set_cursor(0, pos)
+	-- Save current cursor position
+	local pos = vim.api.nvim_win_get_cursor(0)
+	-- Get the word under the cursor
+	local word = vim.fn.expand '<cword>'
+	-- Ask user for the replacement
+	local replacement = vim.fn.input("Replace '" .. word .. "' with: ")
+	-- If user typed something, do the substitution
+	if replacement ~= '' then
+		-- %%s/.../.../gI = substitute globally, case-insensitive
+		vim.cmd(string.format('%%s/\\<%s\\>/%s/gI', word, replacement))
+	end
+	-- Restore cursor position
+	vim.api.nvim_win_set_cursor(0, pos)
 end, { desc = 'Replace all occurrences of word under cursor' })
 
 -- [[ Basic Keymaps ]]
@@ -48,79 +48,79 @@ vim.keymap.set('n', '<leader>t', '<Cmd>tabnew +term<CR>i')
 
 -- [[ Create an empty buffer in a new tab ]]
 vim.keymap.set('n', '<Leader>e', function()
-  vim.cmd 'tabnew' -- create a new tab
-  vim.cmd 'enew' -- create a new empty buffer in it
+	vim.cmd 'tabnew' -- create a new tab
+	vim.cmd 'enew' -- create a new empty buffer in it
 end, { noremap = true, silent = true })
 
 -- [[ Horizontal split with new empty buffer below ]]
 vim.keymap.set('n', '<leader>sv', function()
-  vim.cmd 'split' -- create horizontal split (above by default)
-  vim.cmd 'wincmd j' -- move to the new split below
-  vim.cmd 'enew' -- open new empty buffer
+	vim.cmd 'split' -- create horizontal split (above by default)
+	vim.cmd 'wincmd j' -- move to the new split below
+	vim.cmd 'enew' -- open new empty buffer
 end, { desc = 'New buffer in horizontal split (below)' })
 
 -- [[ Vertical split with new empty buffer to the right ]]
 vim.keymap.set('n', '<leader>sh', function()
-  vim.cmd 'vsplit' -- create vertical split (left by default)
-  vim.cmd 'wincmd l' -- move to the new split to the right
-  vim.cmd 'enew' -- open new empty buffer
+	vim.cmd 'vsplit' -- create vertical split (left by default)
+	vim.cmd 'wincmd l' -- move to the new split to the right
+	vim.cmd 'enew' -- open new empty buffer
 end, { desc = 'New buffer in vertical split (right)' })
 
 -- [[ Save current buffer (asks for filename if new/unsaved) ]]
 vim.keymap.set('n', '<leader>w', function()
-  if vim.api.nvim_buf_get_name(0) == '' then
-    -- Ask user for a filename
-    local filename = vim.fn.input('Save as: ', '', 'file')
-    if filename ~= '' then
-      vim.cmd('saveas ' .. vim.fn.fnameescape(filename))
-    else
-      print 'Save cancelled'
-    end
-  else
-    vim.cmd 'w'
-  end
+	if vim.api.nvim_buf_get_name(0) == '' then
+		-- Ask user for a filename
+		local filename = vim.fn.input('Save as: ', '', 'file')
+		if filename ~= '' then
+			vim.cmd('saveas ' .. vim.fn.fnameescape(filename))
+		else
+			print 'Save cancelled'
+		end
+	else
+		vim.cmd 'w'
+	end
 end, { desc = 'Save buffer (prompt if new file)' })
 
 -- [[ Close current window (asks if buffer is unsaved) ]]
 vim.keymap.set('n', '<leader>q', function()
-  if vim.bo.modified then
-    local choice = vim.fn.input 'Buffer modified! Save (y), Discard (n), Cancel (any other key)? '
-    if choice:lower() == 'y' then
-      if vim.api.nvim_buf_get_name(0) == '' then
-        local filename = vim.fn.input('Save as: ', '', 'file')
-        if filename ~= '' then
-          vim.cmd('saveas ' .. vim.fn.fnameescape(filename))
-          vim.cmd 'q'
-        else
-          print 'Save cancelled'
-        end
-      else
-        vim.cmd 'wq'
-      end
-    elseif choice:lower() == 'n' then
-      vim.cmd 'q!'
-    else
-      print 'Quit cancelled'
-    end
-  else
-    vim.cmd 'q'
-  end
+	if vim.bo.modified then
+		local choice = vim.fn.input 'Buffer modified! Save (y), Discard (n), Cancel (any other key)? '
+		if choice:lower() == 'y' then
+			if vim.api.nvim_buf_get_name(0) == '' then
+				local filename = vim.fn.input('Save as: ', '', 'file')
+				if filename ~= '' then
+					vim.cmd('saveas ' .. vim.fn.fnameescape(filename))
+					vim.cmd 'q'
+				else
+					print 'Save cancelled'
+				end
+			else
+				vim.cmd 'wq'
+			end
+		elseif choice:lower() == 'n' then
+			vim.cmd 'q!'
+		else
+			print 'Quit cancelled'
+		end
+	else
+		vim.cmd 'q'
+	end
 end, { desc = 'Close buffer (prompt if modified)' })
 
 -- [[ Save changes and close current window (asks for filename if new/unsaved) ]]
 vim.keymap.set('n', '<leader>qy', function()
-  if vim.api.nvim_buf_get_name(0) == '' then
-    -- Ask user for a filename
-    local filename = vim.fn.input('Save as: ', '', 'file')
-    if filename ~= '' then
-      vim.cmd('saveas ' .. vim.fn.fnameescape(filename))
-      vim.cmd 'q'
-    else
-      print 'Save cancelled'
-    end
-  else
-    vim.cmd 'wq'
-  end
+	if vim.api.nvim_buf_get_name(0) == '' then
+		-- Ask user for a filename
+		local filename = vim.fn.input('Save as: ', '', 'file')
+		if filename ~= '' then
+			vim.cmd('saveas ' .. vim.fn.fnameescape(filename))
+			vim.cmd 'q'
+		else
+			print 'Save cancelled'
+		end
+	else
+		vim.cmd 'wq'
+	end
 end, { desc = 'Save & quit (prompt if new file)' })
 
 -- [[ Discard changes and Close current window ]]
@@ -137,77 +137,77 @@ vim.keymap.set('n', '<leader>ll', 'ggVG', { desc = 'Select all' })
 
 -- [[ Select all and copy to clipboard ]]
 vim.keymap.set('n', '<leader>lY', function()
-  -- Get all lines from the buffer
-  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
-  -- Join them without adding an extra newline
-  local content = table.concat(lines, '\n')
-  -- Set to system clipboard
-  vim.fn.setreg('+', content)
-  vim.fn.setreg('*', content)
-  -- Notify
-  vim.schedule(function()
-    vim.notify('Copied all to clipboard', vim.log.levels.INFO)
-  end)
+	-- Get all lines from the buffer
+	local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+	-- Join them without adding an extra newline
+	local content = table.concat(lines, '\n')
+	-- Set to system clipboard
+	vim.fn.setreg('+', content)
+	vim.fn.setreg('*', content)
+	-- Notify
+	vim.schedule(function()
+		vim.notify('Copied all to clipboard', vim.log.levels.INFO)
+	end)
 end, { desc = 'Copy all to clipboard' })
 
 -- [[ Copy to clipboard ]]
 -- Normal mode: copy current line
 vim.keymap.set('n', 'Y', function()
-  local line = vim.api.nvim_get_current_line()
-  vim.fn.setreg('+', line)
-  vim.fn.setreg('*', line)
-  vim.schedule(function()
-    vim.notify('Copied line to clipboard', vim.log.levels.INFO)
-  end)
+	local line = vim.api.nvim_get_current_line()
+	vim.fn.setreg('+', line)
+	vim.fn.setreg('*', line)
+	vim.schedule(function()
+		vim.notify('Copied line to clipboard', vim.log.levels.INFO)
+	end)
 end)
 -- Visual mode: copy selection, trim trailing newline if needed
 vim.keymap.set('x', 'Y', [["+y<esc>:lua require("copy_to_clipboard_fix").trim_clipboard()<CR>]])
 
 -- [[ Paste from clipboard with line count ]]
 local function paste_from_clipboard()
-  local lines = vim.fn.getreg('+', 1, true)
-  local line_count = #lines
-  local mode = vim.fn.mode()
-  if mode:match '[vV\22]' then
-    -- Visual mode: get selection range reliably
-    local start_line = math.min(vim.fn.getpos('v')[2], vim.fn.getpos('.')[2]) - 1
-    local end_line = math.max(vim.fn.getpos('v')[2], vim.fn.getpos('.')[2])
-    -- Replace selection
-    vim.api.nvim_buf_set_lines(0, start_line, end_line, false, lines)
-    -- Exit visual mode
-    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<Esc>', true, false, true), 'n', true)
-    -- Notify after visual mode exit
-    vim.schedule(function()
-      vim.notify(line_count .. ' line' .. (line_count > 1 and 's' or '') .. ' pasted from clipboard', vim.log.levels.INFO)
-    end)
-  else
-    -- Normal mode: paste at cursor, characterwise
-    vim.api.nvim_put(lines, 'c', true, true)
-    -- Notify
-    vim.schedule(function()
-      vim.notify(line_count .. ' line' .. (line_count > 1 and 's' or '') .. ' pasted from clipboard', vim.log.levels.INFO)
-    end)
-  end
+	local lines = vim.fn.getreg('+', 1, true)
+	local line_count = #lines
+	local mode = vim.fn.mode()
+	if mode:match '[vV\22]' then
+		-- Visual mode: get selection range reliably
+		local start_line = math.min(vim.fn.getpos('v')[2], vim.fn.getpos('.')[2]) - 1
+		local end_line = math.max(vim.fn.getpos('v')[2], vim.fn.getpos('.')[2])
+		-- Replace selection
+		vim.api.nvim_buf_set_lines(0, start_line, end_line, false, lines)
+		-- Exit visual mode
+		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<Esc>', true, false, true), 'n', true)
+		-- Notify after visual mode exit
+		vim.schedule(function()
+			vim.notify(line_count .. ' line' .. (line_count > 1 and 's' or '') .. ' pasted from clipboard', vim.log.levels.INFO)
+		end)
+	else
+		-- Normal mode: paste at cursor, characterwise
+		vim.api.nvim_put(lines, 'c', true, true)
+		-- Notify
+		vim.schedule(function()
+			vim.notify(line_count .. ' line' .. (line_count > 1 and 's' or '') .. ' pasted from clipboard', vim.log.levels.INFO)
+		end)
+	end
 end
 vim.keymap.set('n', '<leader>P', paste_from_clipboard, { desc = 'Paste from clipboard' })
 vim.keymap.set('x', '<leader>P', paste_from_clipboard, { desc = 'Paste from clipboard' })
 
 -- [[ Paste at cursor inline ]]
 vim.keymap.set('n', '<leader>p', function()
-  -- Get unnamed register
-  local content = vim.fn.getreg '"'
-  if content == '' then
-    return
-  end
-  -- Flatten multi-line content into a single string
-  content = content:gsub('\n', '') -- remove all newlines
-  -- Insert inline at cursor
-  local row, col = unpack(vim.api.nvim_win_get_cursor(0))
-  local line = vim.api.nvim_get_current_line()
-  local new_line = line:sub(1, col) .. content .. line:sub(col + 1)
-  vim.api.nvim_set_current_line(new_line)
-  -- Move cursor to end of pasted text
-  vim.api.nvim_win_set_cursor(0, { row, col + #content })
+	-- Get unnamed register
+	local content = vim.fn.getreg '"'
+	if content == '' then
+		return
+	end
+	-- Flatten multi-line content into a single string
+	content = content:gsub('\n', '') -- remove all newlines
+	-- Insert inline at cursor
+	local row, col = unpack(vim.api.nvim_win_get_cursor(0))
+	local line = vim.api.nvim_get_current_line()
+	local new_line = line:sub(1, col) .. content .. line:sub(col + 1)
+	vim.api.nvim_set_current_line(new_line)
+	-- Move cursor to end of pasted text
+	vim.api.nvim_win_set_cursor(0, { row, col + #content })
 end, { desc = 'Paste at cursor inline' })
 
 -- [ In Visual Mode, paste over selection without yanking ]
@@ -221,92 +221,92 @@ local actions = require 'telescope.actions'
 local action_state = require 'telescope.actions.state'
 local builtin = require 'telescope.builtin'
 local function smart_open_buffer()
-  builtin.buffers {
-    attach_mappings = function(_, map)
-      local function open_selected(prompt_bufnr)
-        local entry = action_state.get_selected_entry()
-        if not entry then
-          return
-        end
-        actions.close(prompt_bufnr)
-        local bufname = vim.api.nvim_buf_get_name(entry.bufnr)
-        if bufname == '' then
-          return
-        end
-        -- Check all windows in current tab
-        local current_tab = vim.api.nvim_get_current_tabpage()
-        for _, win in ipairs(vim.api.nvim_tabpage_list_wins(current_tab)) do
-          local buf = vim.api.nvim_win_get_buf(win)
-          if vim.api.nvim_buf_get_name(buf) == bufname then
-            vim.api.nvim_set_current_win(win)
-            return
-          end
-        end
-        -- Check other tabs
-        for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
-          if tab ~= current_tab then
-            for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do
-              local buf = vim.api.nvim_win_get_buf(win)
-              if vim.api.nvim_buf_get_name(buf) == bufname then
-                -- Switch tab first, then window
-                vim.api.nvim_set_current_tabpage(tab)
-                vim.api.nvim_set_current_win(win)
-                return
-              end
-            end
-          end
-        end
-        -- Not open anywhere → open in current window
-        vim.cmd('buffer ' .. entry.bufnr)
-      end
-      map('i', '<CR>', open_selected)
-      map('n', '<CR>', open_selected)
-      return true
-    end,
-  }
+	builtin.buffers {
+		attach_mappings = function(_, map)
+			local function open_selected(prompt_bufnr)
+				local entry = action_state.get_selected_entry()
+				if not entry then
+					return
+				end
+				actions.close(prompt_bufnr)
+				local bufname = vim.api.nvim_buf_get_name(entry.bufnr)
+				if bufname == '' then
+					return
+				end
+				-- Check all windows in current tab
+				local current_tab = vim.api.nvim_get_current_tabpage()
+				for _, win in ipairs(vim.api.nvim_tabpage_list_wins(current_tab)) do
+					local buf = vim.api.nvim_win_get_buf(win)
+					if vim.api.nvim_buf_get_name(buf) == bufname then
+						vim.api.nvim_set_current_win(win)
+						return
+					end
+				end
+				-- Check other tabs
+				for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
+					if tab ~= current_tab then
+						for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do
+							local buf = vim.api.nvim_win_get_buf(win)
+							if vim.api.nvim_buf_get_name(buf) == bufname then
+								-- Switch tab first, then window
+								vim.api.nvim_set_current_tabpage(tab)
+								vim.api.nvim_set_current_win(win)
+								return
+							end
+						end
+					end
+				end
+				-- Not open anywhere → open in current window
+				vim.cmd('buffer ' .. entry.bufnr)
+			end
+			map('i', '<CR>', open_selected)
+			map('n', '<CR>', open_selected)
+			return true
+		end,
+	}
 end
 -- Map it to <leader><leader>
 vim.keymap.set('n', '<leader><leader>', smart_open_buffer, { desc = 'Switch to Open Buffers' })
 -- which-key, register it to show a description
 require('which-key').register {
-  ['<leader><leader>'] = { smart_open_buffer, 'Switch to Open Buffers' },
+	['<leader><leader>'] = { smart_open_buffer, 'Switch to Open Buffers' },
 }
 
 -- [[ Smart open a file path, reusing empty buffers or tabs if possible ]]
 local function smart_open_file(path)
-  if not path or path == '' then
-    return
-  end
-  path = vim.fn.fnamemodify(path, ':p') -- make absolute
-  -- 1. If file is already open → jump to it
-  for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
-    for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do
-      local buf = vim.api.nvim_win_get_buf(win)
-      if vim.api.nvim_buf_get_name(buf) == path then
-        vim.api.nvim_set_current_tabpage(tab)
-        vim.api.nvim_set_current_win(win)
-        return
-      end
-    end
-  end
-  -- 2. If current tab has an empty "No Name" buffer → reuse it
-  for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-    local buf = vim.api.nvim_win_get_buf(win)
-    local name = vim.api.nvim_buf_get_name(buf)
-    local buftype = vim.api.nvim_buf_get_option(buf, 'buftype')
-    local modified = vim.api.nvim_buf_get_option(buf, 'modified')
-    if name == '' and buftype == '' and not modified then
-      vim.api.nvim_set_current_win(win)
-      vim.cmd('edit ' .. vim.fn.fnameescape(path))
-      return
-    end
-  end
-  -- 3. Otherwise → open in a new tab
-  vim.cmd('tabedit ' .. vim.fn.fnameescape(path))
+	if not path or path == '' then
+		return
+	end
+	path = vim.fn.fnamemodify(path, ':p') -- make absolute
+	-- 1. If file is already open → jump to it
+	for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
+		for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do
+			local buf = vim.api.nvim_win_get_buf(win)
+			if vim.api.nvim_buf_get_name(buf) == path then
+				vim.api.nvim_set_current_tabpage(tab)
+				vim.api.nvim_set_current_win(win)
+				return
+			end
+		end
+	end
+	-- 2. If current tab has an empty "No Name" buffer → reuse it
+	for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+		local buf = vim.api.nvim_win_get_buf(win)
+		local name = vim.api.nvim_buf_get_name(buf)
+		local buftype = vim.api.nvim_buf_get_option(buf, 'buftype')
+		local modified = vim.api.nvim_buf_get_option(buf, 'modified')
+		if name == '' and buftype == '' and not modified then
+			vim.api.nvim_set_current_win(win)
+			vim.cmd('edit ' .. vim.fn.fnameescape(path))
+			return
+		end
+	end
+	-- 3. Otherwise → open in a new tab
+	vim.cmd('tabedit ' .. vim.fn.fnameescape(path))
 end
 
 -- [[ Remap gf to use smart_open_file ]]
 vim.keymap.set('n', 'gf', function()
-  local path = vim.fn.expand '<cfile>' -- get file under cursor
-  smart_open_file(path)
+	local path = vim.fn.expand '<cfile>' -- get file under cursor
+	smart_open_file(path)
 end, { desc = 'Smart gf: open file under cursor in new tab or reuse buffer' })
