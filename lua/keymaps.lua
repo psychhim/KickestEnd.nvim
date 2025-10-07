@@ -216,62 +216,6 @@ vim.keymap.set('x', '<leader>p', '"_dP', { desc = 'Paste over selection without 
 -- [[ Redo ]]
 vim.keymap.set('n', 'U', '<C-r>')
 
--- [[ Smart Open current buffers for Telescope (switch to already open buffer) ]]
-local actions = require 'telescope.actions'
-local action_state = require 'telescope.actions.state'
-local builtin = require 'telescope.builtin'
-local function smart_open_buffer()
-	builtin.buffers {
-		attach_mappings = function(_, map)
-			local function open_selected(prompt_bufnr)
-				local entry = action_state.get_selected_entry()
-				if not entry then
-					return
-				end
-				actions.close(prompt_bufnr)
-				local bufname = vim.api.nvim_buf_get_name(entry.bufnr)
-				if bufname == '' then
-					return
-				end
-				-- Check all windows in current tab
-				local current_tab = vim.api.nvim_get_current_tabpage()
-				for _, win in ipairs(vim.api.nvim_tabpage_list_wins(current_tab)) do
-					local buf = vim.api.nvim_win_get_buf(win)
-					if vim.api.nvim_buf_get_name(buf) == bufname then
-						vim.api.nvim_set_current_win(win)
-						return
-					end
-				end
-				-- Check other tabs
-				for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
-					if tab ~= current_tab then
-						for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do
-							local buf = vim.api.nvim_win_get_buf(win)
-							if vim.api.nvim_buf_get_name(buf) == bufname then
-								-- Switch tab first, then window
-								vim.api.nvim_set_current_tabpage(tab)
-								vim.api.nvim_set_current_win(win)
-								return
-							end
-						end
-					end
-				end
-				-- Not open anywhere → open in current window
-				vim.cmd('buffer ' .. entry.bufnr)
-			end
-			map('i', '<CR>', open_selected)
-			map('n', '<CR>', open_selected)
-			return true
-		end,
-	}
-end
--- Map it to <leader><leader>
-vim.keymap.set('n', '<leader><leader>', smart_open_buffer, { desc = 'Switch to Open Buffers' })
--- which-key, register it to show a description
-require('which-key').register {
-	['<leader><leader>'] = { smart_open_buffer, 'Switch to Open Buffers' },
-}
-
 -- [[ Smart open a file path, reusing empty buffers or tabs if possible ]]
 local function smart_open_file(path)
 	if not path or path == '' then
@@ -304,8 +248,7 @@ local function smart_open_file(path)
 	-- 3. Otherwise → open in a new tab
 	vim.cmd('tabedit ' .. vim.fn.fnameescape(path))
 end
-
--- [[ Remap gf to use smart_open_file ]]
+-- Remap gf to use smart_open_file
 vim.keymap.set('n', 'gf', function()
 	local path = vim.fn.expand '<cfile>' -- get file under cursor
 	smart_open_file(path)

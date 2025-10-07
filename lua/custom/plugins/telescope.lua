@@ -37,22 +37,18 @@ return {
 		-- smart_open function for Telescope to check if the current tab has an empty "No Name" buffer. If it has, it replaces the empty buffer and open a file in the same tab
 		local actions = require 'telescope.actions'
 		local action_state = require 'telescope.actions.state'
-
 		local function smart_open(prompt_bufnr)
 			local entry = action_state.get_selected_entry()
 			if not entry then
 				return
 			end
-
 			local path = entry.path or entry.filename
 			if not path then
 				return
 			end
-
 			if prompt_bufnr and vim.api.nvim_buf_is_valid(prompt_bufnr) then
 				pcall(actions.close, prompt_bufnr)
 			end
-
 			-- 1. If file is already open → jump to it
 			local tabpages = vim.api.nvim_list_tabpages()
 			for _, tab in ipairs(tabpages) do
@@ -65,7 +61,6 @@ return {
 					end
 				end
 			end
-
 			-- 2. If current tab has an empty "No Name" buffer → reuse it
 			local wins = vim.api.nvim_tabpage_list_wins(0)
 			for _, win in ipairs(wins) do
@@ -79,30 +74,24 @@ return {
 					return
 				end
 			end
-
 			-- 3. Otherwise → open in a new tab
 			vim.cmd('tabnew ' .. vim.fn.fnameescape(path))
 		end
-
 		-- Split option in Telescope file picker with smart_open
 		local actions = require 'telescope.actions'
 		local action_state = require 'telescope.actions.state'
-
 		local function smart_open_split(prompt_bufnr, split_type)
 			local entry = action_state.get_selected_entry()
 			if not entry then
 				return
 			end
-
 			local path = entry.path or entry.filename
 			if not path then
 				return
 			end
-
 			if prompt_bufnr and vim.api.nvim_buf_is_valid(prompt_bufnr) then
 				pcall(actions.close, prompt_bufnr)
 			end
-
 			-- Check if file is already open
 			local open_tab, open_win
 			for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
@@ -118,7 +107,6 @@ return {
 					break
 				end
 			end
-
 			if open_tab then
 				local choice = vim.fn.confirm('File is already open in a tab. Open split here anyway?', '&Yes\n&No', 2)
 				if choice ~= 1 then
@@ -129,7 +117,6 @@ return {
 				end
 				-- Else user chose Yes → continue to open split in current tab
 			end
-
 			-- Open in split
 			if split_type == 'v' then
 				-- horizontal → always below
@@ -139,8 +126,9 @@ return {
 				vim.cmd('vertical rightbelow split ' .. vim.fn.fnameescape(path))
 			end
 		end
+		-- Telescope keymaps for using Smart Open
 
-		-- Telescope keymap using Smart Open
+		-- <leader>sf for find files
 		vim.keymap.set('n', '<leader>sf', function()
 			require('telescope.builtin').find_files {
 				attach_mappings = function(_, map)
@@ -161,7 +149,50 @@ return {
 					return true
 				end,
 			}
-		end, { desc = '[S]earch [F]iles (Smart Open)' })
+		end, { desc = '[S]earch [F]iles' })
+		-- <leader>? for old files
+		vim.keymap.set('n', '<leader>?', function()
+			require('telescope.builtin').oldfiles {
+				attach_mappings = function(_, map)
+					map('i', '<CR>', function(prompt_bufnr)
+						smart_open(prompt_bufnr)
+					end)
+					map('n', '<CR>', function(prompt_bufnr)
+						smart_open(prompt_bufnr)
+					end)
+					-- Horizontal split with 'h'
+					map('n', 'h', function(prompt_bufnr)
+						smart_open_split(prompt_bufnr, 'h')
+					end)
+					-- Vertical split with 'v'
+					map('n', 'v', function(prompt_bufnr)
+						smart_open_split(prompt_bufnr, 'v')
+					end)
+					return true
+				end,
+			}
+		end, { desc = '[?] Find recently opened files' })
+
+		-- Current buffers for Telescope (switch to already open buffer)
+		vim.keymap.set('n', '<leader><leader>', function()
+			require('telescope.builtin').buffers {
+				attach_mappings = function(_, map)
+					map('i', '<CR>', function(prompt_bufnr)
+						smart_open(prompt_bufnr)
+					end)
+					map('n', '<CR>', function(prompt_bufnr)
+						smart_open(prompt_bufnr)
+					end)
+					map('n', 'h', function(prompt_bufnr)
+						smart_open_split(prompt_bufnr, 'h')
+					end)
+					map('n', 'v', function(prompt_bufnr)
+						smart_open_split(prompt_bufnr, 'v')
+					end)
+					return true
+				end,
+			}
+		end, { desc = 'Switch to Open Buffers' })
 
 		-- Telescope live_grep in git root
 		-- Function to find the git root directory based on the current buffer's path
@@ -200,8 +231,6 @@ return {
 		vim.api.nvim_create_user_command('LiveGrepGitRoot', live_grep_git_root, {})
 
 		-- See `:help telescope.builtin`
-		vim.keymap.set('n', '<leader>?', require('telescope.builtin').oldfiles, { desc = '[?] Find recently opened files' })
-		vim.keymap.set('n', '<leader><space>', require('telescope.builtin').buffers, { desc = '[ ] Find existing buffers' })
 		vim.keymap.set('n', '<leader>/', function()
 			-- You can pass additional configuration to telescope to change theme, layout, etc.
 			require('telescope.builtin').current_buffer_fuzzy_find(require('telescope.themes').get_dropdown {
@@ -224,7 +253,6 @@ return {
 				vim.notify('Not a git repository', vim.log.levels.WARN, { title = 'Telescope Git Files' })
 				return
 			end
-
 			require('telescope.builtin').git_files {
 				attach_mappings = function(_, map)
 					local actions = require 'telescope.actions'
@@ -238,13 +266,12 @@ return {
 						pcall(actions.close, prompt_bufnr)
 						smart_open(prompt_bufnr)
 					end
-
 					map('i', '<CR>', open_smart)
 					map('n', '<CR>', open_smart)
 					return true
 				end,
 			}
-		end, { desc = 'Search [G]it [F]iles (Smart Open)' })
+		end, { desc = 'Search [G]it [F]iles' })
 		vim.keymap.set('n', '<leader>si', require('telescope.builtin').help_tags, { desc = '[S]earch [I]nfo' })
 		vim.keymap.set('n', '<leader>sw', require('telescope.builtin').grep_string, { desc = '[S]earch current [W]ord' })
 		vim.keymap.set('n', '<leader>sg', require('telescope.builtin').live_grep, { desc = '[S]earch by [G]rep' })
