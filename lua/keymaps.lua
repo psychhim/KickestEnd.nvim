@@ -1,5 +1,5 @@
 -- [[ Few useful keymaps ]]
-vim.keymap.set('v', 'J', ":m '<+1<CR>gv=gv")
+vim.keymap.set('v', 'J', ":m '>+1<CR>gv=gv")
 vim.keymap.set('v', 'K', ":m '<-2<CR>gv=gv")
 vim.keymap.set('n', 'J', 'mzJ`z')
 vim.keymap.set('n', '<leader>j', '<C-d>zz', { desc = 'Scroll down and center cursor' })
@@ -50,7 +50,7 @@ vim.keymap.set('n', '<leader>t', '<Cmd>tabnew +term<CR>i')
 vim.keymap.set('n', '<Leader>e', function()
 	vim.cmd 'tabnew' -- create a new tab
 	vim.cmd 'enew' -- create a new empty buffer in it
-end, { noremap = true, silent = true })
+end, { noremap = true, silent = true, desc = 'Create an empty buffer' })
 
 -- [[ Horizontal split with new empty buffer below ]]
 vim.keymap.set('n', '<leader>sv', function()
@@ -167,51 +167,73 @@ vim.keymap.set('x', 'Y', [["+y<esc>:lua require("copy_to_clipboard_fix").trim_cl
 local function paste_from_clipboard()
 	local lines = vim.fn.getreg('+', 1, true)
 	local line_count = #lines
-	local mode = vim.fn.mode()
-	if mode:match '[vV\22]' then
-		-- Visual mode: get selection range reliably
-		local start_line = math.min(vim.fn.getpos('v')[2], vim.fn.getpos('.')[2]) - 1
-		local end_line = math.max(vim.fn.getpos('v')[2], vim.fn.getpos('.')[2])
-		-- Replace selection
-		vim.api.nvim_buf_set_lines(0, start_line, end_line, false, lines)
-		-- Exit visual mode
-		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<Esc>', true, false, true), 'n', true)
-		-- Notify after visual mode exit
-		vim.schedule(function()
-			vim.notify(line_count .. ' line' .. (line_count > 1 and 's' or '') .. ' pasted from clipboard', vim.log.levels.INFO)
-		end)
-	else
-		-- Normal mode: paste at cursor, characterwise
-		vim.api.nvim_put(lines, 'c', true, true)
-		-- Notify
-		vim.schedule(function()
-			vim.notify(line_count .. ' line' .. (line_count > 1 and 's' or '') .. ' pasted from clipboard', vim.log.levels.INFO)
-		end)
-	end
-end
-vim.keymap.set('n', '<leader>P', paste_from_clipboard, { desc = 'Paste from clipboard' })
-vim.keymap.set('x', '<leader>P', paste_from_clipboard, { desc = 'Paste from clipboard' })
-
--- [[ Paste at cursor inline ]]
-vim.keymap.set('n', '<leader>p', function()
-	-- Get unnamed register
-	local content = vim.fn.getreg '"'
-	if content == '' then
+	if vim.tbl_isempty(lines) then
 		return
 	end
-	-- Flatten multi-line content into a single string
-	content = content:gsub('\n', '') -- remove all newlines
-	-- Insert inline at cursor
-	local row, col = unpack(vim.api.nvim_win_get_cursor(0))
-	local line = vim.api.nvim_get_current_line()
-	local new_line = line:sub(1, col) .. content .. line:sub(col + 1)
-	vim.api.nvim_set_current_line(new_line)
-	-- Move cursor to end of pasted text
-	vim.api.nvim_win_set_cursor(0, { row, col + #content })
-end, { desc = 'Paste at cursor inline' })
+	local mode = vim.fn.mode()
+	if mode == 'v' or mode == 'V' or mode == '\22' then
+		local selection_linewise = (mode == 'V')
+		-- Force register type
+		if selection_linewise and #lines == 1 then
+			-- Make clipboard linewise to force newline after paste
+			vim.fn.setreg('+', table.concat(lines, '\n'), 'l')
+		else
+			-- Otherwise characterwise is fine
+			vim.fn.setreg('+', table.concat(lines, '\n'), 'c')
+		end
+		-- Delete selection without affecting clipboard
+		vim.cmd 'normal! "_dP'
+		-- Move cursor to end of pasted text
+		vim.cmd 'normal! `]'
+		-- Exit visual mode
+		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<Esc>', true, false, true), 'n', true)
+	else
+		-- Normal mode: paste before cursor
+		vim.api.nvim_put(lines, 'c', false, true)
+	end
+	-- Notify with line count
+	vim.schedule(function()
+		vim.notify(line_count .. ' line' .. (line_count > 1 and 's' or '') .. ' pasted from clipboard', vim.log.levels.INFO)
+	end)
+end
+vim.keymap.set('n', '<leader>P', paste_from_clipboard, { desc = 'Paste from clipboard before cursor' })
+vim.keymap.set('x', '<leader>P', paste_from_clipboard, { desc = 'Paste from clipboard over selection' })
 
--- [ In Visual Mode, paste over selection without yanking ]
-vim.keymap.set('x', '<leader>p', '"_dP', { desc = 'Paste over selection without yanking' })
+-- [[ Paste Neovim yanks ]]
+-- In Normal Mode before cursor inline
+vim.keymap.set('n', '<leader>p', function()
+	local lines = vim.fn.getreg('"', 1, true) -- get as list of lines
+	if vim.tbl_isempty(lines) then
+		return
+	end
+	local row, col = unpack(vim.api.nvim_win_get_cursor(0))
+	row = row - 1 -- Lua index is 0-based
+	local current_line = vim.api.nvim_get_current_line()
+	if #lines == 1 then
+		-- Single-line paste (inline)
+		local new_line = current_line:sub(1, col) .. lines[1] .. current_line:sub(col + 1)
+		vim.api.nvim_set_current_line(new_line)
+		vim.api.nvim_win_set_cursor(0, { row + 1, col + #lines[1] })
+	else
+		-- Multi-line paste
+		local before = current_line:sub(1, col)
+		local after = current_line:sub(col + 1)
+		local to_insert = vim.deepcopy(lines)
+		to_insert[1] = before .. to_insert[1]
+		to_insert[#to_insert] = to_insert[#to_insert] .. after
+		vim.api.nvim_buf_set_lines(0, row, row + 1, false, to_insert)
+		vim.api.nvim_win_set_cursor(0, { row + #to_insert, #to_insert[#to_insert] - #after })
+	end
+end, { desc = 'Paste before cursor inline' })
+-- In Visual Mode, paste over selection without yanking
+vim.keymap.set('x', '<leader>p', function()
+	-- Force the unnamed register to characterwise
+	local reg = vim.fn.getreg('"', 1, true) -- get list of lines
+	vim.fn.setreg('"', table.concat(reg, '\n'), 'c') -- set as charwise
+
+	vim.cmd 'normal! "_dP' -- paste over selection
+	vim.cmd 'normal! `]' -- move to end of pasted text
+end, { desc = 'Paste over selection without yanking' })
 
 -- [[ Redo ]]
 vim.keymap.set('n', 'U', '<C-r>')

@@ -127,7 +127,6 @@ return {
 			end
 		end
 		-- Telescope keymaps for using Smart Open
-
 		-- <leader>sf for find files
 		vim.keymap.set('n', '<leader>sf', function()
 			require('telescope.builtin').find_files {
@@ -172,7 +171,6 @@ return {
 				end,
 			}
 		end, { desc = '[?] Find recently opened files' })
-
 		-- Current buffers for Telescope (switch to already open buffer)
 		vim.keymap.set('n', '<leader><leader>', function()
 			require('telescope.builtin').buffers {
