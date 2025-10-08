@@ -1,17 +1,22 @@
 local M = {}
 function M.trim_clipboard()
-	-- Get the content of the '+' register
-	local content = vim.fn.getreg '+'
-	-- Remove single trailing newline if present
+	-- Get content from default register
+	local content = vim.fn.getreg '"'
+	if not content or content == '' then
+		return
+	end
+	-- Remove trailing newline
 	content = content:gsub('\n$', '')
-	-- Update '+' and '*' registers
+	-- Copy to system clipboard
 	vim.fn.setreg('+', content)
 	vim.fn.setreg('*', content)
-	-- Count the number of lines copied
-	local line_count = select(2, content:gsub('\n', '')) + 1 -- Number of newlines + 1
-	-- Notification with line count
+	-- Count lines
+	local line_count = select(2, content:gsub('\n', '')) + 1
 	local plural = line_count == 1 and '' or 's'
-	vim.notify(string.format('Copied %d line%s to clipboard', line_count, plural), vim.log.levels.INFO)
+	-- Delay clipboard notification slightly to appear after yank notification
+	vim.defer_fn(function()
+		vim.notify(string.format('Copied %d line%s to clipboard', line_count, plural), vim.log.levels.INFO, { title = 'Clipboard' })
+	end, 50) -- 50ms delay
 end
 
 return M

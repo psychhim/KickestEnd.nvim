@@ -161,7 +161,10 @@ vim.keymap.set('n', 'Y', function()
 	end)
 end)
 -- Visual mode: copy selection, trim trailing newline if needed
-vim.keymap.set('x', 'Y', [["+y<esc>:lua require("copy_to_clipboard_fix").trim_clipboard()<CR>]])
+vim.keymap.set('x', 'Y', function()
+	vim.cmd 'normal! y'
+	require('copy_to_clipboard_fix').trim_clipboard()
+end, { noremap = true, silent = true })
 
 -- [[ Paste from clipboard with line count ]]
 local function paste_from_clipboard()
