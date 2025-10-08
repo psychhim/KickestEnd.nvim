@@ -154,12 +154,31 @@ end, { desc = 'Copy all to clipboard' })
 -- Normal mode: copy current line
 vim.keymap.set('n', 'Y', function()
 	local line = vim.api.nvim_get_current_line()
+	-- Copy to system clipboard
 	vim.fn.setreg('+', line)
 	vim.fn.setreg('*', line)
+	-- Use user-defined highlight group or fallback to 'IncSearch'
+	local hl_group = vim.g.highlightedyank_highlight_group or 'IncSearch'
+	-- Highlight the line
+	local ns = vim.api.nvim_create_namespace 'custom_yank_highlight'
+	local row = vim.api.nvim_win_get_cursor(0)[1] - 1
+	vim.highlight.range(
+		0, -- bufnr
+		ns, -- namespace
+		hl_group, -- highlight group (dynamic)
+		{ row, 0 }, -- start pos
+		{ row, #line }, -- end pos
+		{ inclusive = true }
+	)
+	-- Clear highlight after short delay
+	vim.defer_fn(function()
+		vim.api.nvim_buf_clear_namespace(0, ns, 0, -1)
+	end, 200)
+	-- Notification
 	vim.schedule(function()
 		vim.notify('Copied line to clipboard', vim.log.levels.INFO)
 	end)
-end)
+end, { desc = 'Copy current line to clipboard' })
 -- Visual mode: copy selection, trim trailing newline if needed
 vim.keymap.set('x', 'Y', function()
 	vim.cmd 'normal! y'
