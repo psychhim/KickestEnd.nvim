@@ -1,6 +1,9 @@
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
+-- Load yank notification with line counts
+require 'yank_notification'
+
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    https://github.com/folke/lazy.nvim
 --    `:help lazy.nvim.txt` for more info
