@@ -328,8 +328,24 @@ local function smart_open_file(path)
 	-- 3. Otherwise → open in a new tab
 	vim.cmd('tabedit ' .. vim.fn.fnameescape(path))
 end
--- Remap gf to use smart_open_file
+
+-- [[ Remap gf to use smart_open_file ]]
 vim.keymap.set('n', 'gf', function()
 	local path = vim.fn.expand '<cfile>' -- get file under cursor
 	smart_open_file(path)
 end, { desc = 'Smart gf: open file under cursor in new tab or reuse buffer' })
+
+-- [[ Function to exit insert/visual/command/terminal modes ]]
+local function tab_q_escape()
+	local mode = vim.api.nvim_get_mode().mode
+	if mode:match '[iIcR]' then
+		return vim.api.nvim_replace_termcodes('<Esc>', true, false, true)
+	elseif mode:match '[vV\x16]' then
+		return vim.api.nvim_replace_termcodes('<Esc>', true, false, true)
+	elseif mode:match 't' then
+		return vim.api.nvim_replace_termcodes('<C-\\><C-n>', true, false, true)
+	else
+		return '' -- normal mode, do nothing
+	end
+end
+vim.keymap.set({ 'i', 'v', 't', 'n' }, '<Tab>q', tab_q_escape, { noremap = true, expr = true, silent = true })

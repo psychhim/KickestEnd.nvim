@@ -22,6 +22,7 @@ return {
 		-- See `:help telescope` and `:help telescope.setup()`
 		require('telescope').setup {
 			defaults = {
+				initial_mode = 'normal', -- Start in normal mode instead of insert
 				mappings = {
 					i = {
 						['<C-u>'] = false,
@@ -130,6 +131,7 @@ return {
 		vim.keymap.set('n', '<leader>sf', function()
 			require('telescope.builtin').find_files {
 				attach_mappings = function(_, map)
+					map('n', 'q', actions.close)
 					map('i', '<CR>', function(prompt_bufnr)
 						smart_open(prompt_bufnr)
 					end)
@@ -152,6 +154,7 @@ return {
 		vim.keymap.set('n', '<leader>?', function()
 			require('telescope.builtin').oldfiles {
 				attach_mappings = function(_, map)
+					map('n', 'q', actions.close)
 					map('i', '<CR>', function(prompt_bufnr)
 						smart_open(prompt_bufnr)
 					end)
@@ -174,6 +177,7 @@ return {
 		vim.keymap.set('n', '<leader><leader>', function()
 			require('telescope.builtin').buffers {
 				attach_mappings = function(_, map)
+					map('n', 'q', actions.close)
 					map('i', '<CR>', function(prompt_bufnr)
 						smart_open(prompt_bufnr)
 					end)
@@ -228,6 +232,10 @@ return {
 			require('telescope.builtin').current_buffer_fuzzy_find(require('telescope.themes').get_dropdown {
 				winblend = 10,
 				previewer = false,
+				attach_mappings = function(prompt_bufnr, map)
+					map('n', 'q', actions.close)
+					return true
+				end,
 			})
 		end, { desc = '[/] Fuzzily search in current buffer' })
 		local function telescope_live_grep_open_files()
@@ -246,6 +254,7 @@ return {
 			end
 			require('telescope.builtin').git_files {
 				attach_mappings = function(_, map)
+					map('n', 'q', actions.close)
 					local actions = require 'telescope.actions'
 					local action_state = require 'telescope.actions.state'
 
