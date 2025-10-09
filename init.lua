@@ -271,6 +271,9 @@ require('lazy').setup({
 -- custom/keymaps.lua file
 require 'keymaps'
 
+-- HTML snippet fixer
+require 'replace_html_snippets'
+
 -- [[ Setting options ]]
 -- See `:help vim.o`
 
@@ -522,10 +525,9 @@ mason_lspconfig.setup {
 -- See `:help cmp`
 local cmp = require 'cmp'
 local luasnip = require 'luasnip'
---require("luasnip.loaders.from_vscode").lazy_load()
+require('luasnip.loaders.from_vscode').lazy_load()
 --require('luasnip.loaders.from_vscode').lazy_load({ paths = { "~/.config/nvim/my_snippets" } })
 luasnip.config.setup {}
-
 cmp.setup {
 	snippet = {
 		expand = function(args)
@@ -570,8 +572,6 @@ cmp.setup {
 		{ name = 'path' },
 	},
 }
---Load Luasnip.loaders
-require('luasnip.loaders.from_vscode').lazy_load()
 
 -- Theme
 require('kanagawa').setup { transparent = true }
