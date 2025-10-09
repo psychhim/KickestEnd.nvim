@@ -16,13 +16,11 @@ return {
 				return
 			end
 			local path = node:get_id()
-
 			-- If the node is a directory, just toggle expand/collapse
 			if node.type == 'directory' then
 				state.commands.toggle_node(state, node)
 				return
 			end
-
 			-- --- File handling starts here ---
 			-- Reuse already open buffer in any tab safely
 			for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
@@ -48,7 +46,6 @@ return {
 					end
 				end
 			end
-
 			-- Reuse empty buffer in current tab
 			local wins = vim.api.nvim_tabpage_list_wins(0)
 			local empty_buf = nil
@@ -67,13 +64,11 @@ return {
 					end
 				end
 			end
-
 			if empty_buf then
 				vim.cmd('edit ' .. vim.fn.fnameescape(path))
 			else
 				vim.cmd('tabnew ' .. vim.fn.fnameescape(path))
 			end
-
 			-- Always close Neo-tree window if open
 			for _, win in ipairs(vim.api.nvim_list_wins()) do
 				if vim.api.nvim_win_is_valid(win) then
@@ -84,7 +79,6 @@ return {
 				end
 			end
 		end
-
 		-- Smart_open_split for split windows
 		local function smart_open_split(state, direction)
 			local node = state.tree:get_node()
@@ -97,7 +91,6 @@ return {
 				state.commands.toggle_node(state, node)
 				return
 			end
-
 			-- Check if file is open in another tab
 			local open_tab, open_win
 			for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
@@ -113,7 +106,6 @@ return {
 					break
 				end
 			end
-
 			if open_tab then
 				local choice = vim.fn.confirm('File is already open in a tab. Open split here anyway?', '&Yes\n&No', 2)
 				if choice ~= 1 then
@@ -124,7 +116,6 @@ return {
 				end
 				-- Else user chose Yes → continue to open split in current tab
 			end
-
 			-- Open split in current tab
 			if direction == 'v' then
 				state.commands.open_vsplit(state)
@@ -140,7 +131,6 @@ return {
 
 			vim.cmd('edit ' .. vim.fn.fnameescape(path))
 		end
-
 		require('neo-tree').setup {
 			close_if_last_window = true,
 			popup_border_style = 'rounded',

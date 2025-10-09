@@ -139,11 +139,27 @@ vim.keymap.set('n', '<leader>ll', 'ggVG', { desc = 'Select all' })
 vim.keymap.set('n', '<leader>lY', function()
 	-- Get all lines from the buffer
 	local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
-	-- Join them without adding an extra newline
 	local content = table.concat(lines, '\n')
 	-- Set to system clipboard
 	vim.fn.setreg('+', content)
 	vim.fn.setreg('*', content)
+	-- Highlight the full buffer
+	local ns = vim.api.nvim_create_namespace 'custom_yank_highlight'
+	local hl_group = vim.g.highlightedyank_highlight_group or 'IncSearch'
+	local end_row = #lines - 1
+	local end_col = #lines[#lines]
+	vim.highlight.range(
+		0, -- bufnr
+		ns,
+		hl_group,
+		{ 0, 0 }, -- start at beginning
+		{ end_row, end_col }, -- end at last line's end
+		{ inclusive = true }
+	)
+	-- Clear highlight after delay
+	vim.defer_fn(function()
+		vim.api.nvim_buf_clear_namespace(0, ns, 0, -1)
+	end, 200)
 	-- Notify
 	vim.schedule(function()
 		vim.notify('Copied all to clipboard', vim.log.levels.INFO)
