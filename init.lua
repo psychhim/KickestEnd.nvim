@@ -271,8 +271,8 @@ require('lazy').setup({
 -- custom/keymaps.lua file
 require 'keymaps'
 
--- HTML snippet fixer
-require 'replace_html_snippets'
+-- Copy custom snippets from custom_friendly_snippets folder
+require 'replace_with_custom_snippets'
 
 -- [[ Setting options ]]
 -- See `:help vim.o`
