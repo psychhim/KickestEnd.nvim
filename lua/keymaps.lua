@@ -263,7 +263,7 @@ vim.keymap.set('x', 'Y', function()
 	require('copy_to_clipboard_fix').trim_clipboard()
 end, { noremap = true, silent = true })
 
--- [[ Paste from clipboard with line count ]]
+-- [[ Paste from clipboard inline with line count ]]
 local function paste_from_clipboard()
 	-- Get clipboard lines
 	local lines = vim.fn.getreg('+', 1, true)
@@ -319,8 +319,8 @@ end
 vim.keymap.set('n', '<leader>P', paste_from_clipboard, { desc = 'Paste from clipboard before cursor' })
 vim.keymap.set('x', '<leader>P', paste_from_clipboard, { desc = 'Paste clipboard over selection' })
 
--- [[ Paste Neovim yanks ]]
--- In Normal Mode before cursor inline
+-- [[ Paste Neovim yanks inline ]]
+-- In Normal Mode before cursor
 vim.keymap.set('n', '<leader>p', function()
 	local lines = vim.fn.getreg('"', 1, true) -- get as list of lines
 	if vim.tbl_isempty(lines) then
@@ -350,7 +350,6 @@ vim.keymap.set('x', '<leader>p', function()
 	-- Force the unnamed register to characterwise
 	local reg = vim.fn.getreg('"', 1, true) -- get list of lines
 	vim.fn.setreg('"', table.concat(reg, '\n'), 'c') -- set as charwise
-
 	vim.cmd 'normal! "_dP' -- paste over selection
 	vim.cmd 'normal! `]' -- move to end of pasted text
 end, { desc = 'Paste over selection without yanking' })
