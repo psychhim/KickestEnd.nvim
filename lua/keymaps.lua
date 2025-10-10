@@ -105,8 +105,13 @@ vim.keymap.set('n', '<leader>dq', vim.diagnostic.setloclist, { desc = 'Diagnosti
 -- [[ Neo-tree sync to current directory & toggle ]]
 vim.keymap.set('n', '<leader>n', '<Cmd>cd %:p:h | Neotree toggle float<CR>')
 
--- [[ Terminal open in new tab ]]
-vim.keymap.set('n', '<leader>t', '<Cmd>tabnew +term<CR>i')
+-- [[ Terminal open ]]
+-- In a new tab
+vim.keymap.set('n', '<leader>tt', '<Cmd>tabnew +term<CR>i', { noremap = true, silent = true, desc = 'Open terminal in new tab' })
+-- In a vertical split (bottom)
+vim.keymap.set('n', '<leader>tv', '<Cmd>split | wincmd j | terminal<CR>i', { noremap = true, silent = true, desc = 'Open terminal in horizontal split' })
+-- In a horizontal split (right side)
+vim.keymap.set('n', '<leader>th', '<Cmd>vsplit | wincmd l | terminal<CR>i', { noremap = true, silent = true, desc = 'Open terminal in vertical split' })
 
 -- [[ Create an empty buffer in a new tab ]]
 vim.keymap.set('n', '<Leader>e', function()
