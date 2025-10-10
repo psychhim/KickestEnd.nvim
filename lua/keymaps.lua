@@ -7,22 +7,84 @@ vim.keymap.set('n', '<leader>k', '<C-u>zz', { desc = 'Scroll up and center curso
 vim.keymap.set('n', 'n', 'nzzzv')
 vim.keymap.set('n', 'N', 'Nzzzv')
 
--- [[ Replace all occurrences of the word under cursor ]]
+-- [[ Replace all occurrences of word under cursor (normal) or selection (visual) ]]
+-- Normal mode
 vim.keymap.set('n', '<leader>F', function()
-	-- Save current cursor position
-	local pos = vim.api.nvim_win_get_cursor(0)
-	-- Get the word under the cursor
+	-- Get word under cursor
 	local word = vim.fn.expand '<cword>'
-	-- Ask user for the replacement
-	local replacement = vim.fn.input("Replace '" .. word .. "' with: ")
-	-- If user typed something, do the substitution
-	if replacement ~= '' then
-		-- %%s/.../.../gI = substitute globally, case-insensitive
-		vim.cmd(string.format('%%s/\\<%s\\>/%s/gI', word, replacement))
+	if word == '' then
+		return
 	end
-	-- Restore cursor position
-	vim.api.nvim_win_set_cursor(0, pos)
-end, { desc = 'Replace all occurrences of word under cursor' })
+	-- Escape for literal search
+	local esc_word = vim.fn.escape(word, '/\\')
+	-- Count occurrences in the buffer (case-insensitive)
+	local occurrences = vim.fn.searchcount({ pattern = '\\<' .. esc_word .. '\\>', maxcount = 0, exact = 1 }).total
+	-- Prompt with only the count
+	local replacement = vim.fn.input(string.format('Replace %d occurrences with: ', occurrences))
+	if replacement == '' then
+		return
+	end
+	-- Escape replacement
+	local esc_replacement = vim.fn.escape(replacement, '\\/&')
+	-- Save cursor position before substitution
+	local original_pos = vim.api.nvim_win_get_cursor(0)
+	-- Perform global, case-insensitive substitution
+	vim.cmd(string.format('silent! %%s/\\<%s\\>/%s/gI', esc_word, esc_replacement))
+	-- Move cursor at the last character of the first replaced occurrence
+	vim.schedule(function()
+		local pattern = '\\<' .. esc_word .. '\\>'
+		vim.fn.cursor(original_pos)
+		vim.cmd 'silent! normal! n'
+		local row, col = unpack(vim.api.nvim_win_get_cursor(0))
+		pcall(vim.api.nvim_win_set_cursor, 0, { row, col + #replacement + 1 })
+	end)
+end, { desc = 'Replace all occurrences of word under cursor', silent = true })
+-- Visual mode
+vim.keymap.set('x', '<leader>F', function()
+	-- Exit visual mode so input() works
+	vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<Esc>', true, false, true), 'nx', false)
+	vim.schedule(function()
+		local mode = vim.fn.visualmode()
+		local start_pos = vim.api.nvim_buf_get_mark(0, '<')
+		local end_pos = vim.api.nvim_buf_get_mark(0, '>')
+		local start_row, start_col = start_pos[1] - 1, start_pos[2]
+		local end_row, end_col = end_pos[1] - 1, end_pos[2] + 1
+		if mode == 'V' then
+			start_col = 0
+			local line = vim.api.nvim_buf_get_lines(0, end_row, end_row + 1, false)[1] or ''
+			end_col = #line
+		end
+		local lines = vim.api.nvim_buf_get_text(0, start_row, start_col, end_row, end_col, {})
+		if not lines or #lines == 0 then
+			return
+		end
+		local selection = table.concat(lines, '\n')
+		if selection == '' then
+			return
+		end
+		-- Escape selection for literal search
+		local esc_selection = vim.fn.escape(selection, '/\\'):gsub('\n', '\\n')
+		-- Count occurrences in the buffer
+		local count = vim.fn.searchcount({ pattern = esc_selection, maxcount = 0, exact = 1 }).total
+		-- Show prompt with only number of occurrences
+		local replacement = vim.fn.input(string.format('Replace %d occurrences with: ', count))
+		if replacement == '' then
+			return
+		end
+		local esc_replacement = vim.fn.escape(replacement, '\\/&'):gsub('\n', '\\n')
+		local original_pos = { start_row + 1, start_col + 1 }
+		-- Silent global substitution
+		vim.cmd(string.format('silent! %%s/\\V%s/%s/g', esc_selection, esc_replacement))
+		-- Move cursor at the last character of the first replaced occurrence
+		vim.schedule(function()
+			vim.fn.cursor(original_pos)
+			vim.cmd 'silent! normal! n'
+			local found_row, found_col = unpack(vim.api.nvim_win_get_cursor(0))
+			-- +1 to put cursor after the last character of replacement
+			pcall(vim.api.nvim_win_set_cursor, 0, { found_row, found_col + #replacement })
+		end)
+	end)
+end, { desc = 'Replace all occurrences of selection', silent = true })
 
 -- [[ Basic Keymaps ]]
 -- Keymaps for better default experience
@@ -335,7 +397,7 @@ vim.keymap.set('n', 'gf', function()
 	smart_open_file(path)
 end, { desc = 'Smart gf: open file under cursor in new tab or reuse buffer' })
 
--- [[ Function to exit insert/visual/command/terminal modes ]]
+-- [[ Remap Tab+q to exit insert/visual/command/terminal modes ]]
 local function tab_q_escape()
 	local mode = vim.api.nvim_get_mode().mode
 	if mode:match '[iIcR]' then

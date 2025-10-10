@@ -22,7 +22,6 @@ return {
 		-- See `:help telescope` and `:help telescope.setup()`
 		require('telescope').setup {
 			defaults = {
-				initial_mode = 'normal', -- Start in normal mode instead of insert
 				mappings = {
 					i = {
 						['<C-u>'] = false,
