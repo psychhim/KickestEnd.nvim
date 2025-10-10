@@ -263,7 +263,8 @@ vim.keymap.set('x', 'Y', function()
 	require('copy_to_clipboard_fix').trim_clipboard()
 end, { noremap = true, silent = true })
 
--- [[ Paste from clipboard inline with line count ]]
+-- [[ Custom inline Paste]]
+-- Paste from clipboard
 local function paste_from_clipboard()
 	-- Get clipboard lines
 	local lines = vim.fn.getreg('+', 1, true)
@@ -318,9 +319,8 @@ local function paste_from_clipboard()
 end
 vim.keymap.set('n', '<leader>P', paste_from_clipboard, { desc = 'Paste from clipboard before cursor' })
 vim.keymap.set('x', '<leader>P', paste_from_clipboard, { desc = 'Paste clipboard over selection' })
-
--- [[ Paste Neovim yanks inline ]]
--- In Normal Mode before cursor
+-- Paste Neovim yanks
+-- In Normal Mode, before cursor
 vim.keymap.set('n', '<leader>p', function()
 	local lines = vim.fn.getreg('"', 1, true) -- get as list of lines
 	if vim.tbl_isempty(lines) then
@@ -347,12 +347,43 @@ vim.keymap.set('n', '<leader>p', function()
 end, { desc = 'Paste before cursor inline' })
 -- In Visual Mode, paste over selection without yanking
 vim.keymap.set('x', '<leader>p', function()
-	-- Force the unnamed register to characterwise
-	local reg = vim.fn.getreg('"', 1, true) -- get list of lines
-	vim.fn.setreg('"', table.concat(reg, '\n'), 'c') -- set as charwise
-	vim.cmd 'normal! "_dP' -- paste over selection
-	vim.cmd 'normal! `]' -- move to end of pasted text
-end, { desc = 'Paste over selection without yanking' })
+	-- Exit visual mode first
+	vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<Esc>', true, false, true), 'n', false)
+	vim.schedule(function()
+		local start_pos = vim.api.nvim_buf_get_mark(0, '<')
+		local end_pos = vim.api.nvim_buf_get_mark(0, '>')
+		local start_row, start_col = start_pos[1] - 1, start_pos[2]
+		local end_row, end_col = end_pos[1] - 1, end_pos[2]
+		local mode = vim.fn.visualmode()
+		if mode == 'V' then
+			-- Full line selection
+			start_col = 0
+			local line = vim.api.nvim_buf_get_lines(0, end_row, end_row + 1, false)[1] or ''
+			end_col = #line
+		else
+			-- Charwise selection → include last char
+			end_col = end_col + 1
+		end
+		-- Get yanked text
+		local reg = vim.fn.getreg('"', 1, true)
+		if #reg == 0 then
+			return
+		end
+		-- Replace the selected text with yanked text
+		vim.api.nvim_buf_set_text(0, start_row, start_col, end_row, end_col, reg)
+		-- Move cursor to the end of pasted text
+		local last_line_text = tostring(reg[#reg] or '')
+		local last_line = start_row + #reg - 1
+		local last_col = #last_line_text
+		if mode == 'v' then
+			-- Charwise paste → end of the same line
+			pcall(vim.api.nvim_win_set_cursor, 0, { start_row + 1, start_col + #last_line_text })
+		else
+			-- Linewise paste → end of last line
+			pcall(vim.api.nvim_win_set_cursor, 0, { last_line + 1, last_col })
+		end
+	end)
+end, { desc = 'Paste over selection', silent = true })
 
 -- [[ Redo ]]
 vim.keymap.set('n', 'U', '<C-r>')
