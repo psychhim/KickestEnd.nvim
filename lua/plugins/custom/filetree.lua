@@ -10,12 +10,19 @@ return {
 		'MunifTanjim/nui.nvim',
 	},
 	config = function()
+		-- Track last created file or folder
+		local last_created_path = nil
+		vim.api.nvim_set_hl(0, 'NeoTreeLastCreated', { fg = '#00ff00', bold = true })
+
+		local function normalize_path(path)
+			return vim.fn.fnamemodify(path, ':p')
+		end
 		local function smart_open(state)
 			local node = state.tree:get_node()
 			if not node then
 				return
 			end
-			local path = node:get_id()
+			local path = node.path
 			-- If the node is a directory, just toggle expand/collapse
 			if node.type == 'directory' then
 				state.commands.toggle_node(state, node)
@@ -28,7 +35,7 @@ return {
 					for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do
 						if vim.api.nvim_win_is_valid(win) then
 							local buf = vim.api.nvim_win_get_buf(win)
-							if vim.api.nvim_buf_is_valid(buf) and vim.api.nvim_buf_get_name(buf) == path then
+							if vim.api.nvim_buf_is_valid(buf) and normalize_path(vim.api.nvim_buf_get_name(buf)) == normalize_path(path) then
 								vim.api.nvim_set_current_tabpage(tab)
 								vim.api.nvim_set_current_win(win)
 								-- close Neo-tree if open
@@ -85,7 +92,7 @@ return {
 			if not node then
 				return
 			end
-			local path = node:get_id()
+			local path = node.path
 
 			if node.type == 'directory' then
 				state.commands.toggle_node(state, node)
@@ -96,7 +103,7 @@ return {
 			for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
 				for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do
 					local buf = vim.api.nvim_win_get_buf(win)
-					if vim.api.nvim_buf_is_valid(buf) and vim.api.nvim_buf_get_name(buf) == path then
+					if vim.api.nvim_buf_is_valid(buf) and normalize_path(vim.api.nvim_buf_get_name(buf)) == normalize_path(path) then
 						open_tab = tab
 						open_win = win
 						break
@@ -153,6 +160,55 @@ return {
 						smart_open_split(state, 'v')
 					end,
 					['t'] = 'noop',
+					['a'] = function(state)
+						-- Get the current node
+						local node = state.tree:get_node()
+						local root
+						-- If on a directory, expand it immediately before prompting
+						if node and node.type == 'directory' then
+							root = node.path
+							if not node:is_expanded() then
+								state.commands.toggle_node(state, node)
+								vim.cmd 'redraw' -- ensure UI updates before input
+							end
+						elseif node then
+							root = vim.fn.fnamemodify(node.path, ':h')
+						else
+							root = vim.loop.cwd()
+						end
+						-- Small delay before input to allow UI to redraw
+						vim.defer_fn(function()
+							local input = vim.fn.input 'New file/folder name (use / at end for folder): '
+							if input == '' then
+								return
+							end
+							local new_path = normalize_path(root .. '/' .. input)
+							local is_folder = vim.endswith(input, '/') or vim.endswith(input, '\\')
+							if is_folder then
+								vim.fn.mkdir(new_path, 'p')
+							else
+								vim.fn.mkdir(vim.fn.fnamemodify(new_path, ':h'), 'p')
+								local f = io.open(new_path, 'w')
+								if f then
+									f:close()
+								end
+							end
+							last_created_path = new_path
+							-- Refresh the tree to show the new item
+							state.commands.refresh(state)
+							-- Expand folder if folder was created
+							if is_folder then
+								vim.defer_fn(function()
+									for _, n in pairs(state.tree.nodes) do
+										if normalize_path(n.path) == last_created_path then
+											state.commands.toggle_node(state, n)
+											break
+										end
+									end
+								end, 20)
+							end
+						end, 40)
+					end,
 				},
 			},
 			filesystem = {
@@ -165,6 +221,17 @@ return {
 					visible = true,
 					hide_dotfiles = false,
 					hide_gitignored = true,
+				},
+				components = {
+					-- Highlight last created file or folder in green
+					name = function(config, node)
+						local node_path = normalize_path(node.path)
+						local hl = nil
+						if last_created_path and node_path == last_created_path then
+							hl = 'NeoTreeLastCreated'
+						end
+						return { text = node.name, highlight = hl }
+					end,
 				},
 			},
 		}
