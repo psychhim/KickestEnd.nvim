@@ -10,34 +10,63 @@ return {
 		'MunifTanjim/nui.nvim',
 	},
 	config = function()
-		-- Handling deleted file buffers, marking them as removed
+		-- Handling deleted file or folder buffers, marking them as removed
 		local function delete_file_mark_removed(state)
 			local node = state.tree:get_node()
-			if not node or node.type ~= 'file' then
+			if not node then
 				return true
 			end
 			local path = node.path
+			local is_dir = (node.type == 'directory')
 			-- Ask for confirmation
-			local choice = vim.fn.confirm('Are you sure you want to delete: ' .. vim.fn.fnamemodify(path, ':t') .. '?', '&Yes\n&No', 2)
+			local label = vim.fn.fnamemodify(path, ':t') .. (is_dir and '/' or '')
+			local choice = vim.fn.confirm('Are you sure you want to delete: ' .. label .. '?', '&Yes\n&No', 2)
 			if choice ~= 1 then
 				return true
 			end -- user chose "No"
-			local buf_to_update = nil
-			for _, win in ipairs(vim.api.nvim_list_wins()) do
-				local buf = vim.api.nvim_win_get_buf(win)
-				if vim.api.nvim_buf_is_valid(buf) and vim.api.nvim_buf_get_name(buf) == path then
-					buf_to_update = buf
-					break
+			-- Delete file or folder recursively
+			if is_dir then
+				local function rm_dir_recursive(target)
+					local fs = vim.loop.fs_scandir(target)
+					if not fs then
+						return
+					end
+					while true do
+						local name, t = vim.loop.fs_scandir_next(fs)
+						if not name then
+							break
+						end
+						local fullpath = target .. '/' .. name
+						if t == 'directory' then
+							rm_dir_recursive(fullpath)
+						else
+							vim.loop.fs_unlink(fullpath)
+						end
+					end
+					vim.loop.fs_rmdir(target)
 				end
+				rm_dir_recursive(path)
+			else
+				vim.loop.fs_unlink(path)
 			end
-			-- Delete file
-			vim.loop.fs_unlink(path)
 			-- Refresh Neo-tree
 			state.commands.refresh(state)
-			-- Update buffer name
-			if buf_to_update and vim.api.nvim_buf_is_valid(buf_to_update) then
-				local filename = vim.fn.fnamemodify(path, ':t')
-				vim.api.nvim_buf_set_name(buf_to_update, filename .. ':file removed')
+			-- Mark all open buffers showing this path (for files only)
+			if not is_dir then
+				for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+					if vim.api.nvim_buf_is_valid(buf) then
+						local name = vim.api.nvim_buf_get_name(buf)
+						if name == path then
+							local filename = vim.fn.fnamemodify(path, ':t')
+							local new_name = string.format('[%s]: file removed', filename)
+							vim.api.nvim_buf_set_option(buf, 'buflisted', false)
+							vim.api.nvim_buf_set_name(buf, new_name)
+							vim.api.nvim_buf_set_option(buf, 'buflisted', true)
+							-- Optionally tag for wipe later
+							vim.api.nvim_buf_set_var(buf, 'marked_for_wipe', true)
+						end
+					end
+				end
 			end
 			return true
 		end
