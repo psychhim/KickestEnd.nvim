@@ -504,5 +504,53 @@ vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI', 'InsertEnter', 'Ins
 vim.keymap.set('n', '<Esc>', '<Esc><Cmd>echo ""<CR>', { noremap = true, silent = true })
 vim.keymap.set('v', '<Esc>', '<Esc><Cmd>echo ""<CR>', { noremap = true, silent = true })
 
+-- When a file is deleted externally, rename all its buffers to "[file]: file removed"
+vim.api.nvim_create_autocmd({ 'BufEnter', 'BufWritePost' }, {
+	callback = function()
+		local current_buf = vim.api.nvim_get_current_buf()
+		local ft = vim.api.nvim_buf_get_option(current_buf, 'filetype')
+		local current_name = vim.api.nvim_buf_get_name(current_buf)
+		-- Skip Neo-tree, unnamed, or already-marked buffers
+		if ft == 'neo-tree' or current_name == '' or current_name:match 'file removed' then
+			return
+		end
+		-- If this file no longer exists, mark all buffers showing it
+		if vim.fn.filereadable(current_name) == 0 then
+			local filename = vim.fn.fnamemodify(current_name, ':t')
+			local new_name = string.format('[%s]: file removed', filename)
+			-- Iterate over all listed buffers
+			for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+				if vim.api.nvim_buf_is_valid(buf) then
+					local name = vim.api.nvim_buf_get_name(buf)
+					if name == current_name and not name:match 'file removed' then
+						-- Temporarily unlist so renaming works cleanly
+						vim.api.nvim_buf_set_option(buf, 'buflisted', false)
+						vim.api.nvim_buf_set_name(buf, new_name)
+						vim.api.nvim_buf_set_option(buf, 'buflisted', true)
+					end
+				end
+			end
+		end
+	end,
+})
+-- Automatically wipe "file removed" buffers when they are closed
+vim.api.nvim_create_autocmd('BufWinLeave', {
+	callback = function(args)
+		local buf = args.buf
+		if vim.api.nvim_buf_is_valid(buf) then
+			local name = vim.api.nvim_buf_get_name(buf)
+			local marked = pcall(vim.api.nvim_buf_get_var, buf, 'marked_for_wipe') and vim.api.nvim_buf_get_var(buf, 'marked_for_wipe')
+			-- If the buffer was marked for wipe or name indicates it's deleted
+			if marked or (name ~= '' and name:match 'file removed') then
+				vim.schedule(function()
+					if vim.api.nvim_buf_is_valid(buf) then
+						vim.cmd('bwipeout! ' .. buf)
+					end
+				end)
+			end
+		end
+	end,
+})
+
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et

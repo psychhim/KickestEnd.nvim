@@ -10,10 +10,40 @@ return {
 		'MunifTanjim/nui.nvim',
 	},
 	config = function()
+		-- Handling deleted file buffers, marking them as removed
+		local function delete_file_mark_removed(state)
+			local node = state.tree:get_node()
+			if not node or node.type ~= 'file' then
+				return true
+			end
+			local path = node.path
+			-- Ask for confirmation
+			local choice = vim.fn.confirm('Are you sure you want to delete: ' .. vim.fn.fnamemodify(path, ':t') .. '?', '&Yes\n&No', 2)
+			if choice ~= 1 then
+				return true
+			end -- user chose "No"
+			local buf_to_update = nil
+			for _, win in ipairs(vim.api.nvim_list_wins()) do
+				local buf = vim.api.nvim_win_get_buf(win)
+				if vim.api.nvim_buf_is_valid(buf) and vim.api.nvim_buf_get_name(buf) == path then
+					buf_to_update = buf
+					break
+				end
+			end
+			-- Delete file
+			vim.loop.fs_unlink(path)
+			-- Refresh Neo-tree
+			state.commands.refresh(state)
+			-- Update buffer name
+			if buf_to_update and vim.api.nvim_buf_is_valid(buf_to_update) then
+				local filename = vim.fn.fnamemodify(path, ':t')
+				vim.api.nvim_buf_set_name(buf_to_update, filename .. ':file removed')
+			end
+			return true
+		end
 		-- Track last created file or folder
 		local last_created_path = nil
 		vim.api.nvim_set_hl(0, 'NeoTreeLastCreated', { fg = '#00ff00', bold = true })
-
 		local function normalize_path(path)
 			return vim.fn.fnamemodify(path, ':p')
 		end
@@ -160,6 +190,7 @@ return {
 						smart_open_split(state, 'v')
 					end,
 					['t'] = 'noop',
+					['d'] = delete_file_mark_removed,
 					['a'] = function(state)
 						-- Get the current node
 						local node = state.tree:get_node()
