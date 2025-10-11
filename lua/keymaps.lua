@@ -148,6 +148,30 @@ vim.keymap.set('n', '<leader>w', function()
 	end
 end, { desc = 'Save buffer (prompt if new file)' })
 
+-- [[ Save As a new file ]]
+vim.keymap.set('n', '<leader>W', function()
+	local current_path = vim.api.nvim_buf_get_name(0)
+	local default_dir
+	if current_path ~= '' then
+		-- Use the current file's directory
+		default_dir = vim.fn.fnamemodify(current_path, ':p:h') .. '/'
+	else
+		-- Use current working directory if no file yet
+		default_dir = vim.fn.getcwd() .. '/'
+	end
+	-- Pre-fill input with directory and filename if available
+	local default_name = current_path ~= '' and vim.fn.fnamemodify(current_path, ':t') or ''
+	local default_input = default_dir .. default_name
+	-- Ask for new full path
+	local new_path = vim.fn.input('Save as: ', default_input, 'file')
+	if new_path ~= '' then
+		vim.cmd('saveas ' .. vim.fn.fnameescape(new_path))
+		print('Saved as ' .. new_path)
+	else
+		print 'Save As cancelled'
+	end
+end, { desc = 'Save As' })
+
 -- [[ Close current window (asks if buffer is unsaved) ]]
 vim.keymap.set('n', '<leader>q', function()
 	if vim.bo.modified then
@@ -268,7 +292,7 @@ vim.keymap.set('x', 'Y', function()
 	require('copy_to_clipboard_fix').trim_clipboard()
 end, { noremap = true, silent = true })
 
--- [[ Custom inline Paste ]]
+-- [[ Inline Paste ]]
 local function paste_register(regname, before_cursor, is_clipboard)
 	local content_lines = vim.fn.getreg(regname, 1, true)
 	if vim.tbl_isempty(content_lines) then
