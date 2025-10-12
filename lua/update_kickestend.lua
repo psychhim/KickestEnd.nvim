@@ -44,5 +44,5 @@ vim.api.nvim_create_user_command('UpdateKickestEnd', function()
 	end
 
 	vim.notify('KickestEnd.nvim successfully updated and fully reset to origin/master!', vim.log.levels.INFO)
-	vim.notify('⚠️ Please restart Neovim for all changes to take effect.', vim.log.levels.WARN)
+	vim.notify('Please restart Neovim for all changes to take effect.', vim.log.levels.WARN)
 end, { desc = 'Completely reset and update KickestEnd.nvim config from origin/master' })
