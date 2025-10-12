@@ -1,6 +1,5 @@
--- ~/.config/nvim/lua/update_kickestend.lua
 -- Command: :UpdateKickestEnd
--- Safely updates your KickestEnd.nvim config to the latest commit on origin/master
+-- Safely updates KickestEnd.nvim config to the latest commit on origin/master
 
 vim.api.nvim_create_user_command('UpdateKickestEnd', function()
 	local config_path = vim.fn.expand '~/.config/nvim'
@@ -11,19 +10,22 @@ vim.api.nvim_create_user_command('UpdateKickestEnd', function()
 		return
 	end
 
-	-- Check for local modifications
+	-- Check for local modifications or untracked files
 	local status = vim.fn.systemlist { 'git', '-C', config_path, 'status', '--porcelain' }
 	local dirty = #status > 0
 
 	if dirty then
-		local answer = vim.fn.input 'Local changes detected! Overwrite them and lose all changes? (y/N): '
+		local answer = vim.fn.input 'Local changes or new files detected! Overwrite and delete them? (y/N): '
 		if answer:lower() ~= 'y' then
 			vim.notify('Update cancelled to preserve your modifications.', vim.log.levels.WARN)
 			return
 		end
 
-		vim.notify('Discarding local modifications...', vim.log.levels.WARN)
+		vim.notify('Discarding all local changes and untracked files...', vim.log.levels.WARN)
+
+		-- Hard reset and clean untracked files/folders
 		vim.fn.system { 'git', '-C', config_path, 'reset', '--hard' }
+		vim.fn.system { 'git', '-C', config_path, 'clean', '-fdx' }
 	end
 
 	-- Fetch and update
@@ -41,5 +43,5 @@ vim.api.nvim_create_user_command('UpdateKickestEnd', function()
 		return
 	end
 
-	vim.notify('KickestEnd.nvim successfully updated to the latest commit on master!', vim.log.levels.INFO)
-end, { desc = 'Safely update KickestEnd.nvim config from origin/master' })
+	vim.notify('KickestEnd.nvim successfully updated and fully reset to origin/master!', vim.log.levels.INFO)
+end, { desc = 'Completely reset and update KickestEnd.nvim config from origin/master' })
