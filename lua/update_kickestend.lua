@@ -10,6 +10,20 @@ vim.api.nvim_create_user_command('UpdateKickestEnd', function()
 		return
 	end
 
+	-- Fetch latest changes first
+	vim.fn.system { 'git', '-C', config_path, 'fetch', '--all' }
+	if vim.v.shell_error ~= 0 then
+		vim.notify('Git fetch failed.', vim.log.levels.ERROR)
+		return
+	end
+
+	-- Check if local master is behind origin/master
+	local behind = vim.fn.systemlist { 'git', '-C', config_path, 'rev-list', '--count', 'master..origin/master' }
+	if tonumber(behind[1]) == 0 then
+		vim.notify('KickestEnd.nvim is already up-to-date with origin/master.', vim.log.levels.INFO)
+		return
+	end
+
 	-- Check for local modifications or untracked files
 	local status = vim.fn.systemlist { 'git', '-C', config_path, 'status', '--porcelain' }
 	local dirty = #status > 0
@@ -22,20 +36,11 @@ vim.api.nvim_create_user_command('UpdateKickestEnd', function()
 		end
 
 		vim.notify('Discarding all local changes and untracked files...', vim.log.levels.WARN)
-
-		-- Hard reset and clean untracked files/folders
 		vim.fn.system { 'git', '-C', config_path, 'reset', '--hard' }
 		vim.fn.system { 'git', '-C', config_path, 'clean', '-fdx' }
 	end
 
-	-- Fetch and update
-	vim.notify('Fetching latest changes from GitHub...', vim.log.levels.INFO)
-	local fetch = vim.fn.systemlist { 'git', '-C', config_path, 'fetch', '--all' }
-	if vim.v.shell_error ~= 0 then
-		vim.notify('Git fetch failed:\n' .. table.concat(fetch, '\n'), vim.log.levels.ERROR)
-		return
-	end
-
+	-- Reset to latest commit
 	vim.notify('Resetting to latest commit on origin/master...', vim.log.levels.INFO)
 	local reset = vim.fn.systemlist { 'git', '-C', config_path, 'reset', '--hard', 'origin/master' }
 	if vim.v.shell_error ~= 0 then
