@@ -1,6 +1,9 @@
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
+-- :UpdateKickestEnd command to safely update KickestEnd.nvim config from origin/master
+require 'update_kickestend'
+
 -- Load yank notification with line counts
 require 'yank_notification'
 
