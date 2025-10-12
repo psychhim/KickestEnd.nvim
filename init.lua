@@ -40,12 +40,16 @@ end
 require('lazy').setup({
 	-- NOTE: First, some plugins that don't require any configuration
 	-- Git related plugins
-	'tpope/vim-fugitive',
-	'tpope/vim-rhubarb',
+	{
+		'tpope/vim-fugitive',
+		cmd = { 'Git', 'G', 'Gdiffsplit', 'Gread', 'Gwrite', 'Ggrep', 'GMove', 'GDelete', 'GBrowse' },
+		dependencies = { 'tpope/vim-rhubarb' },
+	},
 
 	{ -- NOTE: This is where your plugins related to LSP can be installed.
 		-- LSP Configuration & Plugins
 		'neovim/nvim-lspconfig',
+		event = { 'BufReadPre', 'BufNewFile' },
 		dependencies = {
 			-- Automatically install LSPs to stdpath for neovim
 			'williamboman/mason.nvim',
@@ -505,24 +509,40 @@ vim.keymap.set('n', '<Esc>', '<Esc><Cmd>echo ""<CR>', { noremap = true, silent =
 vim.keymap.set('v', '<Esc>', '<Esc><Cmd>echo ""<CR>', { noremap = true, silent = true })
 
 -- When a file is deleted externally, rename all its buffers to "[file]: file removed"
+-- List of buffer names or filetypes to skip (UndoTree, Neo-tree, etc.)
+local skip_buffers = { 'undotree', 'neo-tree' }
+-- Helper function to determine if a buffer should be skipped in future
+local function should_skip(buf)
+	if not vim.api.nvim_buf_is_valid(buf) then
+		return true
+	end
+	local ft = vim.api.nvim_buf_get_option(buf, 'filetype')
+	local bufname = vim.api.nvim_buf_get_name(buf)
+	if bufname == '' then
+		return true
+	end
+	for _, v in ipairs(skip_buffers) do
+		if ft == v or bufname:match(v) then
+			return true
+		end
+	end
+	return false
+end
 vim.api.nvim_create_autocmd({ 'BufEnter', 'BufWritePost' }, {
 	callback = function()
 		local current_buf = vim.api.nvim_get_current_buf()
-		local ft = vim.api.nvim_buf_get_option(current_buf, 'filetype')
-		local current_name = vim.api.nvim_buf_get_name(current_buf)
-		-- Skip Neo-tree, unnamed, or already-marked buffers
-		if ft == 'neo-tree' or current_name == '' or current_name:match 'file removed' then
+		if should_skip(current_buf) then
 			return
 		end
+		local bufname = vim.api.nvim_buf_get_name(current_buf)
 		-- If this file no longer exists, mark all buffers showing it
-		if vim.fn.filereadable(current_name) == 0 then
-			local filename = vim.fn.fnamemodify(current_name, ':t')
+		if vim.fn.filereadable(bufname) == 0 then
+			local filename = vim.fn.fnamemodify(bufname, ':t')
 			local new_name = string.format('[%s]: file removed', filename)
-			-- Iterate over all listed buffers
 			for _, buf in ipairs(vim.api.nvim_list_bufs()) do
 				if vim.api.nvim_buf_is_valid(buf) then
 					local name = vim.api.nvim_buf_get_name(buf)
-					if name == current_name and not name:match 'file removed' then
+					if name == bufname and not name:match 'file removed' then
 						-- Temporarily unlist so renaming works cleanly
 						vim.api.nvim_buf_set_option(buf, 'buflisted', false)
 						vim.api.nvim_buf_set_name(buf, new_name)
@@ -537,17 +557,18 @@ vim.api.nvim_create_autocmd({ 'BufEnter', 'BufWritePost' }, {
 vim.api.nvim_create_autocmd('BufWinLeave', {
 	callback = function(args)
 		local buf = args.buf
-		if vim.api.nvim_buf_is_valid(buf) then
-			local name = vim.api.nvim_buf_get_name(buf)
-			local marked = pcall(vim.api.nvim_buf_get_var, buf, 'marked_for_wipe') and vim.api.nvim_buf_get_var(buf, 'marked_for_wipe')
-			-- If the buffer was marked for wipe or name indicates it's deleted
-			if marked or (name ~= '' and name:match 'file removed') then
-				vim.schedule(function()
-					if vim.api.nvim_buf_is_valid(buf) then
-						vim.cmd('bwipeout! ' .. buf)
-					end
-				end)
-			end
+		if should_skip(buf) then
+			return
+		end
+		local bufname = vim.api.nvim_buf_get_name(buf)
+		-- If the buffer was marked for wipe or name indicates it's deleted
+		local marked = pcall(vim.api.nvim_buf_get_var, buf, 'marked_for_wipe') and vim.api.nvim_buf_get_var(buf, 'marked_for_wipe')
+		if marked or (bufname ~= '' and bufname:match 'file removed') then
+			vim.schedule(function()
+				if vim.api.nvim_buf_is_valid(buf) then
+					vim.cmd('bwipeout! ' .. buf)
+				end
+			end)
 		end
 	end,
 })
