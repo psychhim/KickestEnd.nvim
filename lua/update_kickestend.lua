@@ -4,12 +4,14 @@
 vim.api.nvim_create_user_command('UpdateKickestEnd', function()
 	local config_path = vim.fn.expand '~/.config/nvim'
 
+	-- Ensure this is a git repo
 	if vim.fn.isdirectory(config_path .. '/.git') == 0 then
 		vim.notify('Not a git repository: ' .. config_path, vim.log.levels.ERROR)
 		return
 	end
 
 	-- Fetch latest changes from remote
+	vim.notify('Fetching latest changes from GitHub...', vim.log.levels.INFO)
 	vim.fn.system { 'git', '-C', config_path, 'fetch', '--all' }
 	if vim.v.shell_error ~= 0 then
 		vim.notify('Git fetch failed.', vim.log.levels.ERROR)
@@ -20,10 +22,13 @@ vim.api.nvim_create_user_command('UpdateKickestEnd', function()
 	local status = vim.fn.systemlist { 'git', '-C', config_path, 'status', '--porcelain' }
 	local dirty = #status > 0
 
-	-- Check if local master is behind origin/master
-	local behind = tonumber(vim.fn.systemlist({ 'git', '-C', config_path, 'rev-list', '--count', 'master..origin/master' })[1])
+	-- Check if current HEAD is up-to-date with origin/master
+	local head = vim.fn.systemlist({ 'git', '-C', config_path, 'rev-parse', 'HEAD' })[1]
+	local origin_master = vim.fn.systemlist({ 'git', '-C', config_path, 'rev-parse', 'origin/master' })[1]
+	local is_uptodate = (head == origin_master)
 
-	if not dirty and behind == 0 then
+	-- Skip update if nothing to do
+	if not dirty and is_uptodate then
 		vim.notify('KickestEnd.nvim is already up-to-date with origin/master.', vim.log.levels.INFO)
 		return
 	end
@@ -36,6 +41,7 @@ vim.api.nvim_create_user_command('UpdateKickestEnd', function()
 			return
 		end
 
+		-- Add line break before the discard message
 		vim.notify('\nDiscarding all local changes and untracked files...', vim.log.levels.WARN)
 		vim.fn.system { 'git', '-C', config_path, 'reset', '--hard' }
 		vim.fn.system { 'git', '-C', config_path, 'clean', '-fdx' }
