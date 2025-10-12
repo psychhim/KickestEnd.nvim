@@ -146,7 +146,7 @@ vim.keymap.set('n', '<leader>w', function()
 	else
 		vim.cmd 'w'
 	end
-end, { desc = 'Save buffer (prompt if new file)' })
+end, { desc = 'Save buffer' })
 
 -- [[ Save As a new file ]]
 vim.keymap.set('n', '<leader>W', function()
@@ -196,7 +196,7 @@ vim.keymap.set('n', '<leader>q', function()
 	else
 		vim.cmd 'q'
 	end
-end, { desc = 'Close buffer (prompt if modified)' })
+end, { desc = 'Close buffer' })
 
 -- [[ Save changes and close current window (asks for filename if new/unsaved) ]]
 vim.keymap.set('n', '<leader>qy', function()
@@ -212,7 +212,7 @@ vim.keymap.set('n', '<leader>qy', function()
 	else
 		vim.cmd 'wq'
 	end
-end, { desc = 'Save & quit (prompt if new file)' })
+end, { desc = 'Save & quit' })
 
 -- [[ Discard changes and Close current window ]]
 vim.keymap.set('n', '<leader>qn', '<Cmd>q!<CR>')

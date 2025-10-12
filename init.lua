@@ -38,7 +38,9 @@ do
 end
 
 require('lazy').setup({
-	-- NOTE: First, some plugins that don't require any configuration
+	-- Useful plugin to show you pending keybinds.
+	{ 'folke/which-key.nvim', event = 'VeryLazy', opts = {} },
+
 	-- Git related plugins
 	{
 		'tpope/vim-fugitive',
@@ -134,8 +136,6 @@ require('lazy').setup({
 		},
 	},
 
-	-- Useful plugin to show you pending keybinds.
-	{ 'folke/which-key.nvim', event = 'VeryLazy', opts = {} },
 	{
 		-- Adds git related signs to the gutter, as well as utilities for managing changes
 		'lewis6991/gitsigns.nvim',
@@ -256,6 +256,7 @@ require('lazy').setup({
 		-- use opts = {} for passing setup options
 		-- this is equalent to setup({}) function
 	},
+
 	-- NOTE: Next Step on Your Neovim Journey: Add/Configure additional "plugins" for kickstart
 	--       These are some example plugins that I've included in the kickstart repository.
 	--       Uncomment any of the lines below to enable them.
