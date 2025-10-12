@@ -30,7 +30,7 @@ vim.api.nvim_create_user_command('UpdateKickestEnd', function()
 
 	-- If there are local changes or untracked files, confirm overwrite
 	if dirty then
-		local answer = vim.fn.input 'Local changes or new files detected! Overwrite and delete them? (y/N): '
+		local answer = vim.fn.input 'Local changes detected! Delete and overwrite them? (This cannot be undone) (y/N): '
 		if answer:lower() ~= 'y' then
 			vim.notify('Update cancelled to preserve your modifications.', vim.log.levels.WARN)
 			return
