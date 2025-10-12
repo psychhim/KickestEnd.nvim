@@ -135,10 +135,11 @@ require('lazy').setup({
 	},
 
 	-- Useful plugin to show you pending keybinds.
-	{ 'folke/which-key.nvim', opts = {} },
+	{ 'folke/which-key.nvim', event = 'VeryLazy', opts = {} },
 	{
 		-- Adds git related signs to the gutter, as well as utilities for managing changes
 		'lewis6991/gitsigns.nvim',
+		event = 'BufReadPre',
 		opts = {
 			-- See `:help gitsigns.txt`
 			signs = {
@@ -235,10 +236,11 @@ require('lazy').setup({
 		-- Enable `lukas-reineke/indent-blankline.nvim`
 		-- See `:help ibl`
 		main = 'ibl',
+		event = 'BufReadPre',
 		opts = {},
 	},
 	-- "gc" to comment visual regions/lines
-	{ 'numToStr/Comment.nvim', opts = {} },
+	{ 'numToStr/Comment.nvim', event = 'BufReadPre', opts = {} },
 	{
 		-- Highlight, edit, and navigate code
 		'nvim-treesitter/nvim-treesitter',
