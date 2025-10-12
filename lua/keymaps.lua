@@ -17,8 +17,8 @@ vim.keymap.set('n', '<leader>F', function()
 	end
 	-- Escape for literal search
 	local esc_word = vim.fn.escape(word, '/\\')
-	-- Count occurrences in the buffer (case-insensitive)
-	local occurrences = vim.fn.searchcount({ pattern = '\\<' .. esc_word .. '\\>', maxcount = 0, exact = 1 }).total
+	-- Count occurrences in the buffer (case-sensitive)
+	local occurrences = vim.fn.searchcount({ pattern = '\\<' .. esc_word .. '\\>', maxcount = 0, exact = 1, flags = 'cn' }).total
 	-- Prompt with only the count
 	local replacement = vim.fn.input(string.format('Replace %d occurrences with: ', occurrences))
 	if replacement == '' then
@@ -28,8 +28,8 @@ vim.keymap.set('n', '<leader>F', function()
 	local esc_replacement = vim.fn.escape(replacement, '\\/&')
 	-- Save cursor position before substitution
 	local original_pos = vim.api.nvim_win_get_cursor(0)
-	-- Perform global, case-insensitive substitution
-	vim.cmd(string.format('silent! %%s/\\<%s\\>/%s/gI', esc_word, esc_replacement))
+	-- Perform global, case-sensitive substitution
+	vim.cmd(string.format('silent! %%s/\\<%s\\>/%s/g', esc_word, esc_replacement))
 	-- Move cursor at the last character of the first replaced occurrence
 	vim.schedule(function()
 		local pattern = '\\<' .. esc_word .. '\\>'
