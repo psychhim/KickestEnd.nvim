@@ -17,6 +17,25 @@ return {
 			end,
 		},
 	},
+
+	-- Lazy-load Telescope when needed
+	cmd = { 'Telescope', 'LiveGrepGitRoot' },
+	keys = {
+		{ '<leader>sf', desc = '[S]earch [F]iles' },
+		{ '<leader>?', desc = '[?] Find recently opened files' },
+		{ '<leader><leader>', desc = 'Switch to Open Buffers' },
+		{ '<leader>/', desc = '[/] Fuzzily search in current buffer' },
+		{ '<leader>s/', desc = '[S]earch [/] in Open Files' },
+		{ '<leader>ss', desc = '[S]earch [S]elect Telescope' },
+		{ '<leader>gf', desc = 'Search [G]it [F]iles' },
+		{ '<leader>si', desc = '[S]earch [I]nfo' },
+		{ '<leader>sw', desc = '[S]earch current [W]ord' },
+		{ '<leader>sg', desc = '[S]earch by [G]rep' },
+		{ '<leader>sG', desc = '[S]earch by [G]rep on Git Root' },
+		{ '<leader>sd', desc = '[S]earch [D]iagnostics' },
+		{ '<leader>sr', desc = '[S]earch [R]esume' },
+	},
+
 	config = function()
 		-- [[ Configure Telescope ]]
 		-- See `:help telescope` and `:help telescope.setup()`
@@ -76,9 +95,8 @@ return {
 			-- 3. Otherwise → open in a new tab
 			vim.cmd('tabnew ' .. vim.fn.fnameescape(path))
 		end
+
 		-- Split option in Telescope file picker with smart_open
-		local actions = require 'telescope.actions'
-		local action_state = require 'telescope.actions.state'
 		local function smart_open_split(prompt_bufnr, split_type)
 			local entry = action_state.get_selected_entry()
 			if not entry then
@@ -125,6 +143,7 @@ return {
 				vim.cmd('vertical rightbelow split ' .. vim.fn.fnameescape(path))
 			end
 		end
+
 		-- Telescope keymaps for using Smart Open
 		-- <leader>sf for find files
 		vim.keymap.set('n', '<leader>sf', function()
@@ -149,6 +168,7 @@ return {
 				end,
 			}
 		end, { desc = '[S]earch [F]iles' })
+
 		-- <leader>? for old files
 		vim.keymap.set('n', '<leader>?', function()
 			require('telescope.builtin').oldfiles {
@@ -172,6 +192,7 @@ return {
 				end,
 			}
 		end, { desc = '[?] Find recently opened files' })
+
 		-- Current buffers for Telescope (switch to already open buffer)
 		vim.keymap.set('n', '<leader><leader>', function()
 			require('telescope.builtin').buffers {
@@ -193,6 +214,7 @@ return {
 				end,
 			}
 		end, { desc = 'Switch to Open Buffers' })
+
 		-- Telescope live_grep in git root
 		-- Function to find the git root directory based on the current buffer's path
 		local function find_git_root()
@@ -215,6 +237,7 @@ return {
 			end
 			return git_root
 		end
+
 		-- Custom live_grep function to search in git root
 		local function live_grep_git_root()
 			local git_root = find_git_root()
@@ -225,6 +248,7 @@ return {
 			end
 		end
 		vim.api.nvim_create_user_command('LiveGrepGitRoot', live_grep_git_root, {})
+
 		-- See `:help telescope.builtin`
 		vim.keymap.set('n', '<leader>/', function()
 			-- You can pass additional configuration to telescope to change theme, layout, etc.
@@ -237,6 +261,7 @@ return {
 				end,
 			})
 		end, { desc = '[/] Fuzzily search in current buffer' })
+
 		local function telescope_live_grep_open_files()
 			require('telescope.builtin').live_grep {
 				grep_open_files = true,
@@ -244,6 +269,7 @@ return {
 			}
 		end
 		vim.keymap.set('n', '<leader>s/', telescope_live_grep_open_files, { desc = '[S]earch [/] in Open Files' })
+
 		vim.keymap.set('n', '<leader>ss', require('telescope.builtin').builtin, { desc = '[S]earch [S]elect Telescope' })
 		vim.keymap.set('n', '<leader>gf', function()
 			local is_git_dir = vim.fn.system('git rev-parse --is-inside-work-tree'):gsub('%s+', '') == 'true'
@@ -271,6 +297,7 @@ return {
 				end,
 			}
 		end, { desc = 'Search [G]it [F]iles' })
+
 		vim.keymap.set('n', '<leader>si', require('telescope.builtin').help_tags, { desc = '[S]earch [I]nfo' })
 		vim.keymap.set('n', '<leader>sw', require('telescope.builtin').grep_string, { desc = '[S]earch current [W]ord' })
 		vim.keymap.set('n', '<leader>sg', require('telescope.builtin').live_grep, { desc = '[S]earch by [G]rep' })
