@@ -1,6 +1,4 @@
 -- Unless you are still migrating, remove the deprecated commands from v1.x
-vim.cmd [[ let g:neo_tree_remove_legacy_commands = 1 ]]
-
 return {
 	'nvim-neo-tree/neo-tree.nvim',
 	version = '*',
@@ -9,7 +7,29 @@ return {
 		'nvim-tree/nvim-web-devicons',
 		'MunifTanjim/nui.nvim',
 	},
+	-- Lazy-load when this command is used
+	cmd = { 'Neotree' },
+	-- Lazy load on <leader>n
+	keys = {
+		{
+			'<leader>n',
+			function()
+				require('neo-tree.command').execute { toggle = true } -- toggle Neo-tree
+			end,
+			desc = 'Toggle Neo-tree',
+		},
+	},
 	config = function()
+		vim.cmd [[ let g:neo_tree_remove_legacy_commands = 1 ]]
+
+		-- Track last created file or folder
+		local last_created_path = nil
+		vim.api.nvim_set_hl(0, 'NeoTreeLastCreated', { fg = '#00ff00', bold = true })
+
+		local function normalize_path(path)
+			return vim.fn.fnamemodify(path, ':p')
+		end
+
 		-- Handling deleted file or folder buffers, marking them as removed
 		local function delete_file_mark_removed(state)
 			local node = state.tree:get_node()
@@ -70,12 +90,8 @@ return {
 			end
 			return true
 		end
-		-- Track last created file or folder
-		local last_created_path = nil
-		vim.api.nvim_set_hl(0, 'NeoTreeLastCreated', { fg = '#00ff00', bold = true })
-		local function normalize_path(path)
-			return vim.fn.fnamemodify(path, ':p')
-		end
+
+		-- Smart open file
 		local function smart_open(state)
 			local node = state.tree:get_node()
 			if not node then
@@ -145,7 +161,8 @@ return {
 				end
 			end
 		end
-		-- Smart_open_split for split windows
+
+		-- Smart open in split windows
 		local function smart_open_split(state, direction)
 			local node = state.tree:get_node()
 			if not node then
@@ -197,6 +214,8 @@ return {
 
 			vim.cmd('edit ' .. vim.fn.fnameescape(path))
 		end
+
+		-- Setup Neo-tree
 		require('neo-tree').setup {
 			close_if_last_window = true,
 			popup_border_style = 'rounded',
