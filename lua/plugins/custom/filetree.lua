@@ -9,16 +9,6 @@ return {
 	},
 	-- Lazy-load when this command is used
 	cmd = { 'Neotree' },
-	-- Lazy load on <leader>n
-	keys = {
-		{
-			'<leader>n',
-			function()
-				require('neo-tree.command').execute { toggle = true } -- toggle Neo-tree
-			end,
-			desc = 'Toggle Neo-tree',
-		},
-	},
 	config = function()
 		vim.cmd [[ let g:neo_tree_remove_legacy_commands = 1 ]]
 
