@@ -50,24 +50,4 @@ vim.api.nvim_create_autocmd({ 'BufEnter', 'BufWritePost' }, {
 	end,
 })
 
--- Automatically wipe "file removed" buffers when they are closed
-vim.api.nvim_create_autocmd('BufWinLeave', {
-	callback = function(args)
-		local buf = args.buf
-		if should_skip(buf) then
-			return
-		end
-		local bufname = vim.api.nvim_buf_get_name(buf)
-		-- If the buffer was marked for wipe or name indicates it's deleted
-		local marked = pcall(vim.api.nvim_buf_get_var, buf, 'marked_for_wipe') and vim.api.nvim_buf_get_var(buf, 'marked_for_wipe')
-		if marked or (bufname ~= '' and bufname:match 'file removed') then
-			vim.schedule(function()
-				if vim.api.nvim_buf_is_valid(buf) then
-					vim.cmd('bwipeout! ' .. buf)
-				end
-			end)
-		end
-	end,
-})
-
 return M
