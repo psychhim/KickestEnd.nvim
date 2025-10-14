@@ -14,9 +14,12 @@ return {
 
 		-- Setup buttons
 		dashboard.section.buttons.val = {
-			dashboard.button('i', '  New File', ':ene <BAR> startinsert <CR>'),
-			dashboard.button('<leader>n', '  Open Neo-tree', ':cd ' .. start_dir .. ' | Neotree toggle float<CR>'),
-			dashboard.button('<leader>q', '  Quit', ':qa<CR>'),
+			-- New file
+			dashboard.button('i', '  New File', '<Cmd>ene <Bar> startinsert<CR>'),
+			-- Open Neo-tree in starting directory
+			dashboard.button('<leader>n', '  Open Neo-tree', '<Cmd>cd ' .. vim.fn.fnameescape(start_dir) .. ' | Neotree toggle float<CR>'),
+			-- Quit Neovim
+			dashboard.button('<leader>q', '  Quit', '<Cmd>qa<CR>'),
 		}
 
 		alpha.setup(dashboard.opts)
