@@ -273,7 +273,7 @@ local function close_window(mode)
 		end
 	end
 	-- Special case: last listed buffer in last window
-	if total_listed == 1 then
+	if total_listed == 1 and win_count == 1 then
 		if modified and mode ~= 'save' then
 			-- if buffer had unsaved changes and user chose to discard, force quit
 			vim.cmd 'qa!'
@@ -284,8 +284,10 @@ local function close_window(mode)
 	end
 	-- Close logic
 	if win_count > 1 then
+		-- Buffer is visible in other windows/tabs: just close current window
 		vim.cmd 'close'
 	else
+		-- Buffer is only open in this window: delete the entire buffer from memory
 		if modified and mode ~= 'save' then
 			vim.cmd 'bwipeout!' -- discard changes
 		else
