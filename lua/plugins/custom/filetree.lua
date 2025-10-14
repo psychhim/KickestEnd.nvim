@@ -20,6 +20,12 @@ return {
 			return vim.fn.fnamemodify(path, ':p')
 		end
 
+		-- Helper function to detect Alpha dashboard buffer
+		local function is_alpha_buffer(buf)
+			local ft = vim.api.nvim_buf_get_option(buf, 'filetype')
+			return ft == 'alpha'
+		end
+
 		-- Handling deleted file or folder buffers, marking them as removed
 		local function delete_file_mark_removed(state)
 			local node = state.tree:get_node()
@@ -128,7 +134,8 @@ return {
 						local bufname = vim.api.nvim_buf_get_name(buf)
 						local buftype = vim.api.nvim_buf_get_option(buf, 'buftype')
 						local modified = vim.api.nvim_buf_get_option(buf, 'modified')
-						if bufname == '' and buftype == '' and not modified then
+						-- PATCH: Treat Alpha dashboard as empty
+						if (bufname == '' and buftype == '' and not modified) or is_alpha_buffer(buf) then
 							empty_buf = buf
 							vim.api.nvim_set_current_win(win)
 							break

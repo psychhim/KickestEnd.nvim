@@ -55,6 +55,13 @@ return {
 		-- smart_open function for Telescope to check if the current tab has an empty "No Name" buffer. If it has, it replaces the empty buffer and open a file in the same tab
 		local actions = require 'telescope.actions'
 		local action_state = require 'telescope.actions.state'
+
+		-- Helper function to detect Alpha dashboard buffer
+		local function is_alpha_buffer(buf)
+			local ft = vim.api.nvim_buf_get_option(buf, 'filetype')
+			return ft == 'alpha'
+		end
+
 		local function smart_open(prompt_bufnr)
 			local entry = action_state.get_selected_entry()
 			if not entry then
@@ -86,7 +93,9 @@ return {
 				local name = vim.api.nvim_buf_get_name(buf)
 				local buftype = vim.api.nvim_buf_get_option(buf, 'buftype')
 				local modified = vim.api.nvim_buf_get_option(buf, 'modified')
-				if name == '' and buftype == '' and not modified then
+
+				-- PATCH: also treat Alpha dashboard buffer as empty
+				if (name == '' and buftype == '' and not modified) or is_alpha_buffer(buf) then
 					vim.api.nvim_set_current_win(win)
 					vim.cmd('edit ' .. vim.fn.fnameescape(path))
 					return
