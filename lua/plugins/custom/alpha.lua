@@ -19,7 +19,7 @@ return {
 			-- Open Neo-tree in starting directory
 			dashboard.button('<leader>n', '  Open Neo-tree', '<Cmd>cd ' .. vim.fn.fnameescape(start_dir) .. ' | Neotree toggle float<CR>'),
 			-- Quit Neovim
-			dashboard.button('<leader>q', '  Quit', '<Cmd>qa<CR>'),
+			dashboard.button('<leader>qa', '  Quit', '<Cmd>qa<CR>'),
 		}
 
 		alpha.setup(dashboard.opts)

@@ -302,11 +302,40 @@ end, { desc = 'Close window' })
 -- Save changes and close current window (asks for filename if new/unsaved)
 vim.keymap.set('n', '<leader>qy', function()
 	close_window 'save'
-end, { desc = 'Save & quit' })
+end, { desc = 'Save & quit current window' })
 -- Discard all changes and close
 vim.keymap.set('n', '<leader>qn', function()
 	close_window 'discard'
-end, { desc = 'Discard all changes & quit' })
+end, { desc = 'Discard changes in current window & quit' })
+
+-- [[ Close Neovim ]]
+-- Function to close Neovim, discarding all unsaved changes if confirmed
+local function close_nvim_with_prompt()
+	-- Get list of all listed buffers
+	local buffers = vim.fn.getbufinfo { buflisted = 1 }
+	-- Check for unsaved buffers
+	local unsaved_buffers = {}
+	for _, buf in ipairs(buffers) do
+		if buf.changed == 1 then
+			table.insert(unsaved_buffers, buf)
+		end
+	end
+	if #unsaved_buffers == 0 then
+		-- No unsaved buffers, just quit
+		vim.cmd 'qa!'
+		return
+	end
+	-- Ask user whether to discard changes and quit
+	local answer = vim.fn.input 'You have unsaved changes. Discard all changes and quit? (y/n): '
+	if answer:lower() == 'y' then
+		-- Discard all changes and quit
+		vim.cmd 'qa!'
+	else
+		-- Cancel quitting
+		print 'Cancelled closing Neovim.'
+	end
+end
+vim.keymap.set('n', '<leader>qa', close_nvim_with_prompt, { noremap = true, silent = true, desc = 'Quit Neovim' })
 
 -- [[ Switch below/right split windows ]]
 vim.keymap.set('n', '<leader><Tab>', '<C-W><C-W>')
