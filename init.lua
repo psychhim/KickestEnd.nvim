@@ -1,6 +1,12 @@
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
+-- keymaps.lua
+require 'keymaps'
+
+-- Copy custom snippets from custom_friendly_snippets folder
+require 'replace_with_custom_snippets'
+
 -- :UpdateKickestEnd command to safely update KickestEnd.nvim config from origin/master
 require 'update_kickestend'
 
@@ -273,12 +279,6 @@ require('lazy').setup({
 	--    For additional information see: https://github.com/folke/lazy.nvim#-structuring-your-plugins
 	{ import = 'plugins.custom' },
 }, {})
-
--- custom/keymaps.lua file
-require 'keymaps'
-
--- Copy custom snippets from custom_friendly_snippets folder
-require 'replace_with_custom_snippets'
 
 -- [[ Setting options ]]
 -- See `:help vim.o`
