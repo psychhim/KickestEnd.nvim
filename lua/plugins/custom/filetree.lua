@@ -135,10 +135,14 @@ return {
 						local buftype = vim.api.nvim_buf_get_option(buf, 'buftype')
 						local modified = vim.api.nvim_buf_get_option(buf, 'modified')
 						-- PATCH: Treat Alpha dashboard as empty
-						if (bufname == '' and buftype == '' and not modified) or is_alpha_buffer(buf) then
+						if is_alpha_buffer(buf) or (bufname == '' and buftype == '' and not modified) then
 							empty_buf = buf
 							vim.api.nvim_set_current_win(win)
-							break
+							if is_alpha_buffer(buf) then
+								vim.api.nvim_buf_delete(buf, { force = true })
+							end
+							vim.cmd('edit ' .. vim.fn.fnameescape(path))
+							return
 						end
 					end
 				end

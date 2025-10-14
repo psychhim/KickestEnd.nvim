@@ -343,6 +343,9 @@ vim.api.nvim_create_autocmd('TextYankPost', {
 	pattern = '*',
 })
 
+-- Auto-apply settings to all normal buffers
+require('settings_autoload_after_alpha').setup()
+
 -- Theme
 require('kanagawa').setup { transparent = true }
 vim.cmd [[colorscheme kanagawa]]

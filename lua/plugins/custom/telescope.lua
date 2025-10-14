@@ -93,11 +93,16 @@ return {
 				local name = vim.api.nvim_buf_get_name(buf)
 				local buftype = vim.api.nvim_buf_get_option(buf, 'buftype')
 				local modified = vim.api.nvim_buf_get_option(buf, 'modified')
-
 				-- PATCH: also treat Alpha dashboard buffer as empty
 				if (name == '' and buftype == '' and not modified) or is_alpha_buffer(buf) then
 					vim.api.nvim_set_current_win(win)
+					-- DELETE Alpha buffer if it's in this window
+					if is_alpha_buffer(buf) then
+						vim.api.nvim_buf_delete(buf, { force = true })
+					end
+					-- Now open the file in this window
 					vim.cmd('edit ' .. vim.fn.fnameescape(path))
+					-- Stop further processing
 					return
 				end
 			end
