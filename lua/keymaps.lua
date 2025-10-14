@@ -134,13 +134,25 @@ vim.keymap.set('n', '<leader>sh', function()
 end, { desc = 'New buffer in vertical split (right)' })
 
 -- [[ Save buffer ]]
-local function smart_save(default_input)
+local function smart_save(force_save_as)
 	local current_path = vim.api.nvim_buf_get_name(0)
-	if current_path == '' then
-		-- Ask user for a filename
-		local filename = vim.fn.input('Save as: ', default_input or '', 'file')
+	-- Compute default input (prefill directory + filename)
+	local default_dir
+	if current_path ~= '' then
+		-- Use the current file's directory
+		default_dir = vim.fn.fnamemodify(current_path, ':p:h') .. '/'
+	else
+		-- Use current working directory if no file yet
+		default_dir = vim.fn.getcwd() .. '/'
+	end
+	local default_name = current_path ~= '' and vim.fn.fnamemodify(current_path, ':t') or ''
+	local default_input = default_dir .. default_name
+	-- Decide whether to ask for filename
+	if current_path == '' or force_save_as then
+		-- Ask user for filename
+		local filename = vim.fn.input('Save as: ', default_input, 'file')
 		if filename ~= '' then
-			-- For no-name buffers, just write and set buffer name
+			-- For no-name buffers or Save As, write and set buffer name
 			vim.cmd('write ' .. vim.fn.fnameescape(filename))
 			vim.api.nvim_buf_set_name(0, filename)
 			print('Saved as ' .. filename)
@@ -153,27 +165,13 @@ local function smart_save(default_input)
 		print('Saved ' .. current_path)
 	end
 end
--- Helper to compute default input for new buffers
-local function get_default_input()
-	local current_path = vim.api.nvim_buf_get_name(0)
-	local default_dir
-	if current_path ~= '' then
-		-- Use the current file's directory
-		default_dir = vim.fn.fnamemodify(current_path, ':p:h') .. '/'
-	else
-		-- Use current working directory if no file yet
-		default_dir = vim.fn.getcwd() .. '/'
-	end
-	local default_name = current_path ~= '' and vim.fn.fnamemodify(current_path, ':t') or ''
-	return default_dir .. default_name
-end
--- Save current buffer (asks for filename if new/unsaved)
+-- [[ Save current buffer ]]
 vim.keymap.set('n', '<leader>w', function()
-	smart_save(get_default_input())
+	smart_save(false) -- normal save: only ask if buffer is new
 end, { desc = 'Save buffer' })
 -- Save As a new file
 vim.keymap.set('n', '<leader>W', function()
-	smart_save(get_default_input())
+	smart_save(true) -- force Save As
 end, { desc = 'Save As' })
 
 -- [[ Close current window ]]
