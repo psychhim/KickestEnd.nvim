@@ -197,15 +197,24 @@ local function listed_buffer_count()
 	return count
 end
 -- Main function
-local function close_window()
+local function close_window(mode)
 	local bufnr = vim.api.nvim_get_current_buf()
 	local modified = vim.bo.modified
+	local buftype = vim.api.nvim_buf_get_option(bufnr, 'buftype') -- detect terminal buffer
 	local win_count = buffer_window_count(bufnr)
 	local total_listed = listed_buffer_count()
-	-- Ask user if buffer is modified
+	-- Handle terminal buffers separately
+	if buftype == 'terminal' then
+		if win_count > 1 then
+			vim.cmd 'close'
+		else
+			vim.api.nvim_buf_delete(bufnr, { force = true })
+		end
+		return
+	end
+	-- Handle saving/discarding logic
 	if modified then
-		local choice = vim.fn.input 'Buffer modified! Save (y), Discard (n), Cancel (any other key)? '
-		if choice:lower() == 'y' then
+		if mode == 'save' then
 			if vim.api.nvim_buf_get_name(bufnr) == '' then
 				local filename = vim.fn.input('Save as: ', '', 'file')
 				if filename ~= '' then
@@ -217,16 +226,34 @@ local function close_window()
 			else
 				vim.cmd 'w'
 			end
-		elseif choice:lower() == 'n' then
-			-- discard changes
+		elseif mode == 'discard' then
+			-- just continue and close without saving
 		else
-			print 'Quit cancelled'
-			return
+			-- ask user
+			local choice = vim.fn.input 'Buffer modified! Save (y), Discard (n), Cancel (any other key)? '
+			if choice:lower() == 'y' then
+				if vim.api.nvim_buf_get_name(bufnr) == '' then
+					local filename = vim.fn.input('Save as: ', '', 'file')
+					if filename ~= '' then
+						vim.cmd('saveas ' .. vim.fn.fnameescape(filename))
+					else
+						print 'Save cancelled'
+						return
+					end
+				else
+					vim.cmd 'w'
+				end
+			elseif choice:lower() == 'n' then
+				-- discard changes
+			else
+				print 'Quit cancelled'
+				return
+			end
 		end
 	end
 	-- Special case: last listed buffer in last window
 	if total_listed == 1 then
-		if modified then
+		if modified and mode ~= 'save' then
 			-- if buffer had unsaved changes and user chose to discard, force quit
 			vim.cmd 'qa!'
 		else
@@ -238,7 +265,7 @@ local function close_window()
 	if win_count > 1 then
 		vim.cmd 'close'
 	else
-		if modified then
+		if modified and mode ~= 'save' then
 			vim.cmd 'bwipeout!' -- discard changes
 		else
 			vim.cmd 'bdelete'
@@ -246,32 +273,16 @@ local function close_window()
 	end
 end
 -- Asks what to do if the window is unsaved, otherwise just close
-vim.keymap.set('n', '<leader>q', close_window, { desc = 'Close window' })
+vim.keymap.set('n', '<leader>q', function()
+	close_window()
+end, { desc = 'Close window' })
 -- Save changes and close current window (asks for filename if new/unsaved)
 vim.keymap.set('n', '<leader>qy', function()
-	local bufnr = vim.api.nvim_get_current_buf()
-	if vim.api.nvim_buf_get_name(bufnr) == '' then
-		local filename = vim.fn.input('Save as: ', '', 'file')
-		if filename ~= '' then
-			vim.cmd('saveas ' .. vim.fn.fnameescape(filename))
-		else
-			print 'Save cancelled'
-			return
-		end
-	else
-		vim.cmd 'w'
-	end
-	close_window()
+	close_window 'save'
 end, { desc = 'Save & quit' })
 -- Discard all changes and close
 vim.keymap.set('n', '<leader>qn', function()
-	local bufnr = vim.api.nvim_get_current_buf()
-	-- Force wipe buffer if it's the last window
-	if buffer_window_count(bufnr) > 1 then
-		vim.cmd 'close'
-	else
-		vim.cmd 'bwipeout!'
-	end
+	close_window 'discard'
 end, { desc = 'Discard all changes & quit' })
 
 -- [[ Switch below/right split windows ]]
