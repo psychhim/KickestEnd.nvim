@@ -149,23 +149,42 @@ local function smart_save(force_save_as)
 	local default_input = default_dir .. default_name
 	-- Decide whether to ask for filename
 	if current_path == '' or force_save_as then
-		-- Ask user for filename
-		local filename = vim.fn.input('Save as: ', default_input, 'file')
-		if filename ~= '' then
-			-- For no-name buffers or Save As, write and set buffer name
-			vim.cmd('write ' .. vim.fn.fnameescape(filename))
-			vim.api.nvim_buf_set_name(0, filename)
-			print('Saved as ' .. filename)
-		else
-			print 'Save cancelled'
+		local filename
+		local overwrite = false
+		while true do
+			-- Ask user for filename
+			filename = vim.fn.input('Save as: ', default_input, 'file')
+			if filename == '' then
+				print 'Save cancelled'
+				return
+			end
+			-- Check if file already exists
+			if vim.loop.fs_stat(filename) then
+				local choice = vim.fn.input(string.format("File '%s' already exists! Overwrite? (y/N): ", filename))
+				if choice:lower() == 'y' then
+					overwrite = true
+					break -- overwrite confirmed
+				else
+					-- Ask again for a new name
+					default_input = filename
+					print 'Choose a different filename.'
+				end
+			else
+				break -- file doesn't exist, safe to write
+			end
 		end
+		-- For no-name buffers or Save As, write and set buffer name
+		local write_cmd = overwrite and 'write!' or 'write'
+		vim.cmd(write_cmd .. ' ' .. vim.fn.fnameescape(filename))
+		vim.api.nvim_buf_set_name(0, filename)
+		print('Saved as ' .. filename)
 	else
 		-- Buffer already has a name, just save it
 		vim.cmd 'w'
 		print('Saved ' .. current_path)
 	end
 end
--- [[ Save current buffer ]]
+-- Save current buffer
 vim.keymap.set('n', '<leader>w', function()
 	smart_save(false) -- normal save: only ask if buffer is new
 end, { desc = 'Save buffer' })
