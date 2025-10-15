@@ -56,12 +56,6 @@ return {
 		local actions = require 'telescope.actions'
 		local action_state = require 'telescope.actions.state'
 
-		-- Helper function to detect Alpha dashboard buffer
-		local function is_alpha_buffer(buf)
-			local ft = vim.api.nvim_buf_get_option(buf, 'filetype')
-			return ft == 'alpha'
-		end
-
 		local function smart_open(prompt_bufnr)
 			local entry = action_state.get_selected_entry()
 			if not entry then
@@ -93,16 +87,34 @@ return {
 				local name = vim.api.nvim_buf_get_name(buf)
 				local buftype = vim.api.nvim_buf_get_option(buf, 'buftype')
 				local modified = vim.api.nvim_buf_get_option(buf, 'modified')
+				local ft = vim.api.nvim_buf_get_option(buf, 'filetype')
 				-- PATCH: also treat Alpha dashboard buffer as empty
-				if (name == '' and buftype == '' and not modified) or is_alpha_buffer(buf) then
+				if (name == '' and buftype == '' and not modified) or ft == 'alpha' then
 					vim.api.nvim_set_current_win(win)
-					-- DELETE Alpha buffer if it's in this window
-					if is_alpha_buffer(buf) then
-						vim.api.nvim_buf_delete(buf, { force = true })
+					-- DELETE Alpha buffer contents if it's Alpha
+					if ft == 'alpha' then
+						vim.api.nvim_buf_set_option(buf, 'modifiable', true)
+						vim.api.nvim_buf_set_lines(buf, 0, -1, false, {}) -- clear contents
+						vim.api.nvim_buf_set_option(buf, 'buftype', '')
+						vim.api.nvim_buf_set_option(buf, 'modified', false)
 					end
 					-- Now open the file in this window
-					vim.cmd('edit ' .. vim.fn.fnameescape(path))
-					-- Stop further processing
+					vim.cmd('edit! ' .. vim.fn.fnameescape(path)) -- note the !
+
+					-- Restore normal buffer/window options after opening a file
+					local normal_win_opts = {
+						number = true, -- enable line numbers
+						relativenumber = true, -- enable relative line numbers
+						signcolumn = 'yes', -- show sign column
+						cursorline = false, -- no cursorline by default
+						foldenable = true, -- enable folds
+						wrap = false, -- no line wrap
+						spell = false, -- disable spell
+					}
+					local win = vim.api.nvim_get_current_win()
+					for opt, val in pairs(normal_win_opts) do
+						vim.api.nvim_win_set_option(win, opt, val)
+					end
 					return
 				end
 			end

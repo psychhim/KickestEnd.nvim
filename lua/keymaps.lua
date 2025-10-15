@@ -113,11 +113,12 @@ vim.keymap.set('n', '<leader>tv', '<Cmd>split | wincmd j | terminal<CR>i', { nor
 -- In a horizontal split (right side)
 vim.keymap.set('n', '<leader>th', '<Cmd>vsplit | wincmd l | terminal<CR>i', { noremap = true, silent = true, desc = 'Open terminal in vertical split' })
 
--- [[ Create an empty buffer in a new tab ]]
+-- [[ Create an empty buffer in a new tab and open Alpha ]]
 vim.keymap.set('n', '<Leader>e', function()
 	vim.cmd 'tabnew' -- create a new tab
 	vim.cmd 'enew' -- create a new empty buffer in it
-end, { noremap = true, silent = true, desc = 'Create an empty buffer' })
+	require('alpha').start(true) -- open Alpha dashboard in this new tab
+end, { noremap = true, silent = true, desc = 'Create a new tab' })
 
 -- [[ Horizontal split with new empty buffer below ]]
 vim.keymap.set('n', '<leader>sv', function()

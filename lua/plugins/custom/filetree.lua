@@ -134,14 +134,32 @@ return {
 						local bufname = vim.api.nvim_buf_get_name(buf)
 						local buftype = vim.api.nvim_buf_get_option(buf, 'buftype')
 						local modified = vim.api.nvim_buf_get_option(buf, 'modified')
-						-- PATCH: Treat Alpha dashboard as empty
+						-- PATCH: Treat Alpha dashboard as empty buffer and restore normal options
 						if is_alpha_buffer(buf) or (bufname == '' and buftype == '' and not modified) then
-							empty_buf = buf
 							vim.api.nvim_set_current_win(win)
+							-- Clear Alpha buffer if it's Alpha
 							if is_alpha_buffer(buf) then
-								vim.api.nvim_buf_delete(buf, { force = true })
+								vim.api.nvim_buf_set_option(buf, 'modifiable', true)
+								vim.api.nvim_buf_set_lines(buf, 0, -1, false, {}) -- clear contents
+								vim.api.nvim_buf_set_option(buf, 'buftype', '')
+								vim.api.nvim_buf_set_option(buf, 'modified', false)
 							end
-							vim.cmd('edit ' .. vim.fn.fnameescape(path))
+							-- Open the file in this window
+							vim.cmd('edit! ' .. vim.fn.fnameescape(path)) -- force edit
+							-- Restore normal buffer/window options
+							local normal_win_opts = {
+								number = true, -- enable line numbers
+								relativenumber = true, -- enable relative line numbers
+								signcolumn = 'yes', -- show sign column
+								cursorline = false, -- no cursorline by default
+								foldenable = true, -- enable folds
+								wrap = false, -- no line wrap
+								spell = false, -- disable spell
+							}
+							local win = vim.api.nvim_get_current_win()
+							for opt, val in pairs(normal_win_opts) do
+								vim.api.nvim_win_set_option(win, opt, val)
+							end
 							return
 						end
 					end
