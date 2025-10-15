@@ -18,20 +18,33 @@ return {
 				vim.cmd 'enew'
 				vim.cmd 'startinsert'
 			end),
-			-- Create new empty buffer in a new tab
+			-- Create new tab
 			dashboard.button('<leader>e', '  New Tab', function()
-				local alpha_buf = vim.api.nvim_get_current_buf()
-				-- Close Alpha buffer
-				vim.api.nvim_buf_delete(alpha_buf, { force = true })
-				-- Create new tab and empty buffer
+				-- Open a new tab
 				vim.cmd 'tabnew'
-				vim.cmd 'enew'
+				-- Open Alpha in that new tab
+				require('alpha').start(true)
 			end),
 			-- Open Neo-tree in current directory
 			dashboard.button('<leader>n', '  Open Neo-tree', '<Cmd>Neotree toggle float<CR>'),
-			-- Close Neovim
+			-- Close Alpha window or quit Neovim
 			dashboard.button('<leader>q', '  Exit', function()
-				vim.cmd 'qa!'
+				-- Get current tab windows
+				local wins = vim.api.nvim_tabpage_list_wins(0)
+				if #wins > 1 then
+					-- If there are other windows in this tab, just close the Alpha window
+					vim.cmd 'close'
+				else
+					-- If this is the only window in the tab, check total tabs
+					local tab_count = #vim.api.nvim_list_tabpages()
+					if tab_count > 1 then
+						-- Close only the current tab
+						vim.cmd 'tabclose'
+					else
+						-- Quit Neovim if this is the last tab
+						vim.cmd 'qa!'
+					end
+				end
 			end),
 		}
 

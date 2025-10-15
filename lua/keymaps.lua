@@ -217,6 +217,19 @@ local function listed_buffer_count()
 	end
 	return count
 end
+-- Helper function: check if any Alpha buffer exists anywhere
+local function is_alpha_running()
+	for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+		if vim.api.nvim_buf_is_valid(buf) then
+			local buftype = vim.api.nvim_buf_get_option(buf, 'buftype')
+			local ft = vim.api.nvim_buf_get_option(buf, 'filetype')
+			if buftype == 'nofile' and ft == 'alpha' then
+				return true
+			end
+		end
+	end
+	return false
+end
 -- Main function
 local function close_window(mode)
 	local bufnr = vim.api.nvim_get_current_buf()
@@ -271,6 +284,12 @@ local function close_window(mode)
 				return
 			end
 		end
+	end
+	-- Special case: only 1 listed buffer but an Alpha dashboard exists somewhere
+	if total_listed == 1 and is_alpha_running() then
+		-- Just close the current window instead of quitting Neovim
+		vim.cmd 'close'
+		return
 	end
 	-- Special case: last listed buffer in last window
 	if total_listed == 1 and win_count == 1 then
