@@ -310,7 +310,7 @@ end, { desc = 'Discard changes in current window & quit' })
 
 -- [[ Close Neovim ]]
 -- Function to close Neovim, discarding all unsaved changes if confirmed
-_G.close_nvim_with_prompt = function()
+local function close_nvim_with_prompt()
 	-- Get list of all listed buffers
 	local buffers = vim.fn.getbufinfo { buflisted = 1 }
 	-- Check for unsaved buffers
@@ -332,10 +332,10 @@ _G.close_nvim_with_prompt = function()
 		vim.cmd 'qa!'
 	else
 		-- Cancel quitting
-		print '\nCancelled closing Neovim.'
+		print 'Cancelled closing Neovim.'
 	end
 end
-vim.keymap.set('n', '<leader>qa', _G.close_nvim_with_prompt, { noremap = true, silent = true, desc = 'Quit Neovim' })
+vim.keymap.set('n', '<leader>qa', close_nvim_with_prompt, { noremap = true, silent = true, desc = 'Quit Neovim' })
 
 -- [[ Switch below/right split windows ]]
 vim.keymap.set('n', '<leader><Tab>', '<C-W><C-W>')

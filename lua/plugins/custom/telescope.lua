@@ -74,7 +74,7 @@ return {
 			if prompt_bufnr and vim.api.nvim_buf_is_valid(prompt_bufnr) then
 				pcall(actions.close, prompt_bufnr)
 			end
-			-- 1. If file is already open → jump to it
+			-- If file is already open → jump to it
 			local tabpages = vim.api.nvim_list_tabpages()
 			for _, tab in ipairs(tabpages) do
 				for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do
@@ -86,7 +86,7 @@ return {
 					end
 				end
 			end
-			-- 2. If current tab has an empty "No Name" buffer → reuse it
+			-- If current tab has an empty "No Name" buffer → reuse it
 			local wins = vim.api.nvim_tabpage_list_wins(0)
 			for _, win in ipairs(wins) do
 				local buf = vim.api.nvim_win_get_buf(win)
@@ -106,7 +106,7 @@ return {
 					return
 				end
 			end
-			-- 3. Otherwise → open in a new tab
+			-- Otherwise → open in a new tab
 			vim.cmd('tabnew ' .. vim.fn.fnameescape(path))
 		end
 
