@@ -46,10 +46,24 @@ return {
 			alpha.redraw()
 		end
 
+		-- Function to handle New File logic
+		local function new_file_alpha()
+			local listed = vim.fn.getbufinfo { buflisted = 1 } -- all listed buffers
+			local tabs = vim.api.nvim_list_tabpages() -- all tabs
+			-- If exactly one listed buffer AND one tab, delete all listed buffers and open insert mode in a new buffer
+			if #listed == 1 and #tabs == 1 then
+				for _, buf in ipairs(listed) do
+					pcall(vim.api.nvim_buf_delete, buf.bufnr, { force = true })
+				end
+			end
+			vim.cmd 'enew'
+			vim.cmd 'startinsert'
+		end
+
 		-- Setup buttons
 		dashboard.section.buttons.val = {
 			-- New file
-			dashboard.button('i', '  New File', '<Cmd>enew<CR><Cmd>startinsert<CR>'),
+			dashboard.button('i', '  New File', new_file_alpha),
 			-- Create new tab and open Alpha
 			dashboard.button('<leader>e', '  New Tab', '<Cmd>tabnew<CR><Cmd>lua require("alpha").start(true)<CR>'),
 			-- Open Neo-tree in current directory
