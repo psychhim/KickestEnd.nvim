@@ -174,6 +174,13 @@ local function smart_save(force_save_as)
 				break -- file doesn't exist, safe to write
 			end
 		end
+		-- If Save As filename is same as current file, just write and return
+		if filename == current_path then
+			local write_cmd = overwrite and 'write!' or 'write'
+			vim.cmd(write_cmd)
+			print('Saved ' .. filename)
+			return
+		end
 		-- For no-name buffers or Save As, write and set buffer name
 		local write_cmd = overwrite and 'write!' or 'write'
 		vim.cmd(write_cmd .. ' ' .. vim.fn.fnameescape(filename))
