@@ -188,7 +188,6 @@ return {
 				return
 			end
 			local path = node.path
-
 			if node.type == 'directory' then
 				state.commands.toggle_node(state, node)
 				return
@@ -230,8 +229,97 @@ return {
 					vim.cmd 'wincmd J'
 				end)
 			end
-
 			vim.cmd('edit ' .. vim.fn.fnameescape(path))
+		end
+
+		-- Custom copy function
+		local function copy(state)
+			local node = state.tree:get_node()
+			if not node then
+				return
+			end
+			local src = node.path
+			local is_dir = (node.type == 'directory')
+			local src_name = vim.fn.fnamemodify(src, ':t')
+			-- Default destination folder is parent of the source node
+			local default_dest = vim.fn.fnamemodify(src, ':h') .. '/'
+			-- Prompt showing filename in message, user can type folder or folder+filename
+			local input_path = vim.fn.input(string.format('Copy [%s] to path: ', src_name), default_dest)
+			if input_path == '' then
+				return
+			end
+			-- Expand relative path
+			local dest = vim.fn.fnamemodify(input_path, ':p')
+			-- If input ends with / → treat as folder, append original filename
+			if vim.endswith(dest, '/') or vim.endswith(dest, '\\') then
+				dest = dest .. src_name
+			end
+			-- Avoid overwriting: append (copy), (copy2), etc.
+			local function unique_path(path)
+				local base = vim.fn.fnamemodify(path, ':r')
+				local ext = vim.fn.fnamemodify(path, ':e')
+				local final = path
+				local counter = 1
+				while vim.loop.fs_stat(final) do
+					if is_dir then
+						final = string.format('%s(copy%d)', base, counter)
+					else
+						if ext ~= '' then
+							final = string.format('%s(copy%d).%s', base, counter, ext)
+						else
+							final = string.format('%s(copy%d)', base, counter)
+						end
+					end
+					counter = counter + 1
+				end
+				return final
+			end
+			dest = unique_path(dest)
+			-- Make sure parent directories exist
+			local dest_parent = vim.fn.fnamemodify(dest, ':h')
+			vim.fn.mkdir(dest_parent, 'p')
+			local function copy_file(src_file, dest_file)
+				local f = io.open(src_file, 'rb')
+				if not f then
+					return
+				end
+				local content = f:read '*all'
+				f:close()
+				local out = io.open(dest_file, 'wb')
+				if not out then
+					return
+				end
+				out:write(content)
+				out:close()
+			end
+			local function copy_dir(src_dir, dest_dir)
+				vim.fn.mkdir(dest_dir, 'p')
+				local handle = vim.loop.fs_scandir(src_dir)
+				if not handle then
+					return
+				end
+				while true do
+					local name, t = vim.loop.fs_scandir_next(handle)
+					if not name then
+						break
+					end
+					local src_path = src_dir .. '/' .. name
+					local dest_path = dest_dir .. '/' .. name
+					if t == 'directory' then
+						copy_dir(src_path, dest_path)
+					else
+						copy_file(src_path, dest_path)
+					end
+				end
+			end
+			if is_dir then
+				copy_dir(src, dest)
+			else
+				copy_file(src, dest)
+			end
+			last_created_path = dest
+			state.commands.refresh(state)
+			print('Copied to ' .. dest)
 		end
 
 		-- Setup Neo-tree
@@ -258,6 +346,7 @@ return {
 					end,
 					['t'] = 'noop',
 					['d'] = delete_file_mark_removed,
+					['c'] = copy, -- Custom copy
 					['a'] = function(state)
 						-- Get the current node
 						local node = state.tree:get_node()
