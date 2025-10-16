@@ -182,9 +182,18 @@ local function smart_save(force_save_as)
 			return
 		end
 		-- For no-name buffers or Save As, write and set buffer name
-		local write_cmd = overwrite and 'write!' or 'write'
-		vim.cmd(write_cmd .. ' ' .. vim.fn.fnameescape(filename))
-		if current_path ~= '' then
+		if current_path == '' then
+			-- No-name buffer: set name first
+			vim.api.nvim_buf_set_name(0, filename)
+			-- Force overwrite if file exists
+			local write_cmd = 'write!'
+			vim.cmd(write_cmd)
+			-- Clear modified flag so future saves work correctly
+			vim.api.nvim_buf_set_option(0, 'modified', false)
+		else
+			-- Named buffer: normal Save As logic
+			local write_cmd = overwrite and 'write!' or 'write'
+			vim.cmd(write_cmd .. ' ' .. vim.fn.fnameescape(filename))
 			-- Preserve cursor position and undo history
 			local old_buf = vim.api.nvim_get_current_buf()
 			local cursor_pos = vim.api.nvim_win_get_cursor(0)
@@ -197,9 +206,6 @@ local function smart_save(force_save_as)
 			vim.cmd 'undojoin'
 			-- Delete the old buffer without saving
 			vim.api.nvim_buf_delete(old_buf, { force = true })
-		else
-			-- No-name buffer, just set its name
-			vim.api.nvim_buf_set_name(0, filename)
 		end
 		print('Saved as ' .. filename)
 	else
