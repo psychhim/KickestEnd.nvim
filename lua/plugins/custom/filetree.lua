@@ -153,7 +153,7 @@ return {
 								signcolumn = 'yes', -- show sign column
 								cursorline = false, -- no cursorline by default
 								foldenable = true, -- enable folds
-								wrap = false, -- no line wrap
+								wrap = true, -- line wrap
 								spell = false, -- disable spell
 							}
 							local win = vim.api.nvim_get_current_win()

@@ -283,6 +283,9 @@ require('lazy').setup({
 -- [[ Setting options ]]
 -- See `:help vim.o`
 
+-- Line wrap
+vim.opt.wrap = true
+
 -- Set highlight on search
 vim.o.hlsearch = false
 
