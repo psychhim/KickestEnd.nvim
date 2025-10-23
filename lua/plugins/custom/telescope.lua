@@ -47,6 +47,10 @@ return {
 						['<C-u>'] = false,
 						['<C-d>'] = false,
 					},
+					n = {
+						-- disable ESC
+						['<ESC>'] = false,
+					},
 				},
 			},
 		}

@@ -337,6 +337,7 @@ return {
 				width = 40,
 				mapping_options = { noremap = true, nowait = true },
 				mappings = {
+					['<ESC>'] = function() end, -- override with an empty function to disable <ESC>
 					['<cr>'] = smart_open,
 					['v'] = function(state)
 						smart_open_split(state, 'h')
