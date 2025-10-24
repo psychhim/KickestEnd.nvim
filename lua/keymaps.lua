@@ -582,17 +582,40 @@ vim.keymap.set('n', 'gf', function()
 	smart_open_file(path)
 end, { desc = 'Smart gf: open file under cursor in new tab or reuse buffer' })
 
--- [[ Remap Tab+q to exit insert/visual/command/terminal modes ]]
-local function tab_q_escape()
-	local mode = vim.api.nvim_get_mode().mode
-	if mode:match '[iIcR]' then
-		return vim.api.nvim_replace_termcodes('<Esc>', true, false, true)
-	elseif mode:match '[vV\x16]' then
-		return vim.api.nvim_replace_termcodes('<Esc>', true, false, true)
-	elseif mode:match 't' then
-		return vim.api.nvim_replace_termcodes('<C-\\><C-n>', true, false, true)
+-- [[ Remap double Tab to exit insert/visual/command/terminal modes ]]
+local last_tab_time = 0
+local double_tab_timeout = 400 -- milliseconds
+local tab_timer = nil
+local function tab_double_escape()
+	local now = vim.loop.hrtime() / 1e6 -- current time in ms
+	if tab_timer then
+		tab_timer:stop()
+		tab_timer:close()
+		tab_timer = nil
+		local mode = vim.api.nvim_get_mode().mode
+		if mode:match '[iIcR]' then
+			return vim.api.nvim_replace_termcodes('<Esc>', true, false, true)
+		elseif mode:match '[vV\x16]' then
+			return vim.api.nvim_replace_termcodes('<Esc>', true, false, true)
+		elseif mode:match 't' then
+			return vim.api.nvim_replace_termcodes('<C-\\><C-n>', true, false, true)
+		else
+			return '' -- normal mode
+		end
 	else
-		return '' -- normal mode, do nothing
+		-- first Tab press → start a timer to send a normal Tab if no second Tab
+		tab_timer = vim.loop.new_timer()
+		tab_timer:start(
+			double_tab_timeout,
+			0,
+			vim.schedule_wrap(function()
+				vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<Tab>', true, false, true), 'n', false)
+				tab_timer:stop()
+				tab_timer:close()
+				tab_timer = nil
+			end)
+		)
+		return '' -- do nothing
 	end
 end
-vim.keymap.set({ 'i', 'v', 't', 'n' }, '<Tab>q', tab_q_escape, { noremap = true, expr = true, silent = true })
+vim.keymap.set({ 'i', 'v', 't' }, '<Tab>', tab_double_escape, { noremap = true, expr = true, silent = true })
