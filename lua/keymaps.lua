@@ -393,7 +393,8 @@ local function close_window(mode)
 	-- Function to handle save/discard/cancel for modified buffers
 	local function save_if_needed(callback)
 		if not modified then
-			callback()
+			-- Toggle Undotree for write-protected files
+			toggle_undotree_twice(callback)
 			return
 		end
 		local function save_file()
@@ -427,7 +428,7 @@ local function close_window(mode)
 			save_file()
 			toggle_undotree_twice(callback)
 		elseif mode == 'discard' then
-			callback()
+			toggle_undotree_twice(callback)
 		else
 			-- Ask user
 			local choice = vim.fn.input 'Buffer modified! Save (y), Discard (n), Cancel (any other key)? '
@@ -435,7 +436,7 @@ local function close_window(mode)
 				save_file()
 				toggle_undotree_twice(callback)
 			elseif choice:lower() == 'n' then
-				callback()
+				toggle_undotree_twice(callback)
 			else
 				print 'Quit cancelled'
 			end
