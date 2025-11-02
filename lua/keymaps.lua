@@ -140,9 +140,9 @@ local sudo_password_cache = nil -- store sudo password for session
 local function write_with_sudo(filename, content)
 	-- Prompt for password once per session
 	if not sudo_password_cache then
-		local pass = vim.fn.inputsecret 'sudo password: '
+		local pass = vim.fn.inputsecret '[sudo] password: '
 		if pass == '' or pass == nil then
-			vim.notify('Sudo password required, save cancelled', vim.log.levels.WARN)
+			vim.notify('Password is required, Save cancelled', vim.log.levels.WARN)
 			return false
 		end
 		sudo_password_cache = pass
@@ -179,7 +179,7 @@ local function smart_save(force_save_as)
 			-- Ask user for filename
 			filename = vim.fn.input('Save as: ', default_input, 'file')
 			if filename == '' then
-				print 'Save cancelled'
+				vim.notify('Password is required, Save cancelled', vim.log.levels.WARN)
 				return
 			end
 			-- Check if file already exists
@@ -397,14 +397,15 @@ local function close_window(mode)
 			toggle_undotree_twice(callback)
 			return
 		end
+		-- Returns true if save succeeded, false if cancelled
 		local function save_file()
 			local filename = vim.api.nvim_buf_get_name(bufnr)
 			if filename == '' then
 				-- Ask user for filename
 				local input_name = vim.fn.input('Save as: ', '', 'file')
 				if input_name == '' then
-					print 'Save cancelled'
-					return
+					vim.notify('Password is required, Save cancelled', vim.log.levels.WARN)
+					return false
 				end
 				vim.api.nvim_buf_set_name(bufnr, input_name)
 				filename = input_name
@@ -418,23 +419,28 @@ local function close_window(mode)
 				local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
 				local content = table.concat(lines, '\n')
 				if not write_with_sudo(filename, content) then
-					return
+					return false
 				end
 			end
 			-- Mark buffer as unmodified
 			vim.api.nvim_buf_set_option(bufnr, 'modified', false)
+			return true
 		end
 		if mode == 'save' then
-			save_file()
-			toggle_undotree_twice(callback)
+			if save_file() then
+				toggle_undotree_twice(callback)
+			end
 		elseif mode == 'discard' then
 			toggle_undotree_twice(callback)
 		else
 			-- Ask user
 			local choice = vim.fn.input 'Buffer modified! Save (y), Discard (n), Cancel (any other key)? '
 			if choice:lower() == 'y' then
-				save_file()
-				toggle_undotree_twice(callback)
+				if save_file() then
+					toggle_undotree_twice(callback)
+				else
+					vim.notify('Password is required, Save cancelled', vim.log.levels.WARN)
+				end
 			elseif choice:lower() == 'n' then
 				toggle_undotree_twice(callback)
 			else
