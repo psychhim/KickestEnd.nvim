@@ -349,12 +349,13 @@ local function toggle_undotree_twice(callback)
 end
 -- Main function
 local function close_window(mode)
-	local function do_close()
-		local bufnr = vim.api.nvim_get_current_buf()
-		local modified = vim.bo.modified
-		local buftype = vim.api.nvim_buf_get_option(bufnr, 'buftype') -- detect terminal buffer
-		local win_count = buffer_window_count(bufnr)
-		local total_listed = listed_buffer_count()
+	local bufnr = vim.api.nvim_get_current_buf()
+	local modified = vim.bo.modified
+	local buftype = vim.api.nvim_buf_get_option(bufnr, 'buftype') -- detect terminal buffer
+	local win_count = buffer_window_count(bufnr)
+	local total_listed = listed_buffer_count()
+	-- Function to perform the actual closing logic
+	local function perform_close()
 		-- Handle terminal buffers separately
 		if buftype == 'terminal' then
 			if win_count > 1 then
@@ -364,55 +365,14 @@ local function close_window(mode)
 			end
 			return
 		end
-		-- Handle saving/discarding logic
-		if modified then
-			if mode == 'save' then
-				if vim.api.nvim_buf_get_name(bufnr) == '' then
-					local filename = vim.fn.input('Save as: ', '', 'file')
-					if filename ~= '' then
-						vim.cmd('saveas ' .. vim.fn.fnameescape(filename))
-					else
-						print 'Save cancelled'
-						return
-					end
-				else
-					vim.cmd 'w'
-				end
-			elseif mode == 'discard' then
-				-- just continue and close without saving
-			else
-				-- ask user
-				local choice = vim.fn.input 'Buffer modified! Save (y), Discard (n), Cancel (any other key)? '
-				if choice:lower() == 'y' then
-					if vim.api.nvim_buf_get_name(bufnr) == '' then
-						local filename = vim.fn.input('Save as: ', '', 'file')
-						if filename ~= '' then
-							vim.cmd('saveas ' .. vim.fn.fnameescape(filename))
-						else
-							print 'Save cancelled'
-							return
-						end
-					else
-						vim.cmd 'w'
-					end
-				elseif choice:lower() == 'n' then
-					-- discard changes
-				else
-					print 'Quit cancelled'
-					return
-				end
-			end
-		end
 		-- Special case: only 1 listed buffer but an Alpha dashboard exists somewhere
 		if total_listed == 1 and is_alpha_running() then
-			-- Just close the current window instead of quitting Neovim
 			vim.cmd 'close'
 			return
 		end
 		-- Special case: last listed buffer in last window
 		if total_listed == 1 and win_count == 1 then
 			if modified and mode ~= 'save' then
-				-- if buffer had unsaved changes and user chose to discard, force quit
 				vim.cmd 'qa!'
 			else
 				vim.cmd 'qa'
@@ -421,10 +381,8 @@ local function close_window(mode)
 		end
 		-- Close logic
 		if win_count > 1 then
-			-- Buffer is visible in other windows/tabs: just close current window
 			vim.cmd 'close'
 		else
-			-- Buffer is only open in this window: delete the entire buffer from memory
 			if modified and mode ~= 'save' then
 				vim.cmd 'bwipeout!' -- discard changes
 			else
@@ -432,18 +390,67 @@ local function close_window(mode)
 			end
 		end
 	end
-	-- Toggle Undotree before closing to ensure undo history is preserved
-	toggle_undotree_twice(do_close)
+	-- Function to handle save/discard/cancel for modified buffers
+	local function save_if_needed(callback)
+		if not modified then
+			callback()
+			return
+		end
+		local function save_file()
+			local filename = vim.api.nvim_buf_get_name(bufnr)
+			if filename == '' then
+				-- Ask user for filename
+				local input_name = vim.fn.input('Save as: ', '', 'file')
+				if input_name == '' then
+					print 'Save cancelled'
+					return
+				end
+				vim.api.nvim_buf_set_name(bufnr, input_name)
+				filename = input_name
+			end
+			-- Try normal write first
+			local ok, err = pcall(function()
+				vim.cmd 'write'
+			end)
+			if not ok then
+				-- Fallback to sudo write using your helper
+				local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
+				local content = table.concat(lines, '\n')
+				if not write_with_sudo(filename, content) then
+					return
+				end
+			end
+			-- Mark buffer as unmodified
+			vim.api.nvim_buf_set_option(bufnr, 'modified', false)
+		end
+		if mode == 'save' then
+			save_file()
+			toggle_undotree_twice(callback)
+		elseif mode == 'discard' then
+			callback()
+		else
+			-- Ask user
+			local choice = vim.fn.input 'Buffer modified! Save (y), Discard (n), Cancel (any other key)? '
+			if choice:lower() == 'y' then
+				save_file()
+				toggle_undotree_twice(callback)
+			elseif choice:lower() == 'n' then
+				callback()
+			else
+				print 'Quit cancelled'
+			end
+		end
+	end
+	-- Start save/discard/cancel workflow
+	save_if_needed(perform_close)
 end
--- Asks what to do if the window is unsaved, otherwise just close
+-- Keymaps
 vim.keymap.set('n', '<leader>q', function()
 	close_window()
 end, { desc = 'Close window' })
--- Save changes and close current window (asks for filename if new/unsaved)
 vim.keymap.set('n', '<leader>qy', function()
 	close_window 'save'
 end, { desc = 'Save & quit current window' })
--- Discard all changes and close
 vim.keymap.set('n', '<leader>qn', function()
 	close_window 'discard'
 end, { desc = 'Discard changes in current window & quit' })
