@@ -37,6 +37,13 @@ local function rename_deleted_buffers()
 		if vim.api.nvim_buf_is_valid(buf) and not should_skip(buf) then
 			local bufname = vim.api.nvim_buf_get_name(buf)
 			if bufname ~= '' and vim.fn.filereadable(bufname) == 0 then
+				-- Skip buffers for files that have never been written (new files)
+				local ftime = vim.fn.getftime(bufname)
+				local modified = vim.api.nvim_buf_get_option(buf, 'modified')
+				if ftime == -1 and not modified then
+					goto continue
+				end
+
 				local filename = vim.fn.fnamemodify(bufname, ':t')
 				local new_name = string.format('[%s]: file removed', filename)
 
@@ -60,6 +67,7 @@ local function rename_deleted_buffers()
 				end
 			end
 		end
+		::continue::
 	end
 end
 
