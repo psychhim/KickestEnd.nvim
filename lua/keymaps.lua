@@ -135,6 +135,7 @@ vim.keymap.set('n', '<leader>sh', function()
 end, { desc = 'New buffer in vertical split (right)' })
 
 -- [[ Save buffer ]]
+local sudo_password_cache = nil -- store sudo password for session
 local function smart_save(force_save_as)
 	local current_path = vim.api.nvim_buf_get_name(0)
 	-- Compute default input (prefill directory + filename)
@@ -149,8 +150,8 @@ local function smart_save(force_save_as)
 	local default_name = current_path ~= '' and vim.fn.fnamemodify(current_path, ':t') or ''
 	local default_input = default_dir .. default_name
 	-- Decide whether to ask for filename
+	local filename = current_path
 	if current_path == '' or force_save_as then
-		local filename
 		local overwrite = false
 		while true do
 			-- Ask user for filename
@@ -174,45 +175,46 @@ local function smart_save(force_save_as)
 				break -- file doesn't exist, safe to write
 			end
 		end
-		-- If Save As filename is same as current file, just write and return
-		if filename == current_path then
-			local write_cmd = overwrite and 'write!' or 'write'
-			vim.cmd(write_cmd)
-			print('Saved ' .. filename)
+	end
+	-- Read buffer content
+	local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
+	local content = table.concat(lines, '\n')
+	-- Determine if the file is writable
+	local writable = vim.fn.filereadable(filename) == 1 and vim.fn.filewritable(filename) == 1
+	if writable then
+		-- Normal writable file
+		if current_path == '' or force_save_as then
+			vim.cmd('write ' .. vim.fn.fnameescape(filename))
+		else
+			vim.cmd 'write'
+		end
+	else
+		-- File requires sudo
+		-- Prompt for password once per session
+		if not sudo_password_cache then
+			local pass = vim.fn.inputsecret 'sudo password: '
+			if pass == '' or pass == nil then
+				vim.notify('Sudo password required, save cancelled', vim.log.levels.WARN)
+				return
+			end
+			sudo_password_cache = pass
+		end
+		-- Write buffer content to sudo tee
+		local sudo_cmd = string.format('sudo -S tee %s > /dev/null', vim.fn.fnameescape(filename))
+		local ok = vim.fn.system(sudo_cmd, sudo_password_cache .. '\n' .. content)
+		if vim.v.shell_error ~= 0 then
+			vim.notify('Failed to write with sudo: ' .. ok, vim.log.levels.ERROR)
+			-- clear cached password to allow retry next time
+			sudo_password_cache = nil
 			return
 		end
-		-- For no-name buffers or Save As, write and set buffer name
-		if current_path == '' then
-			-- No-name buffer: set name first
-			vim.api.nvim_buf_set_name(0, filename)
-			-- Force overwrite if file exists
-			local write_cmd = 'write!'
-			vim.cmd(write_cmd)
-			-- Clear modified flag so future saves work correctly
-			vim.api.nvim_buf_set_option(0, 'modified', false)
-		else
-			-- Named buffer: normal Save As logic
-			local write_cmd = overwrite and 'write!' or 'write'
-			vim.cmd(write_cmd .. ' ' .. vim.fn.fnameescape(filename))
-			-- Preserve cursor position and undo history
-			local old_buf = vim.api.nvim_get_current_buf()
-			local cursor_pos = vim.api.nvim_win_get_cursor(0)
-			local undo_history = vim.fn.getbufinfo(old_buf)[1].changedtick
-			-- Open the new file in a fresh buffer
-			vim.cmd('edit ' .. vim.fn.fnameescape(filename))
-			-- Restore cursor
-			vim.api.nvim_win_set_cursor(0, cursor_pos)
-			-- Restore undo history
-			vim.cmd 'undojoin'
-			-- Delete the old buffer without saving
-			vim.api.nvim_buf_delete(old_buf, { force = true })
-		end
-		print('Saved as ' .. filename)
-	else
-		-- Buffer already has a name, just save it
-		vim.cmd 'w'
-		print('Saved ' .. current_path)
 	end
+	-- Preserve cursor position and undo history
+	local cursor_pos = vim.api.nvim_win_get_cursor(0)
+	vim.api.nvim_buf_set_option(0, 'modified', false)
+	vim.api.nvim_win_set_cursor(0, cursor_pos)
+
+	print('Saved ' .. filename)
 end
 -- Save current buffer
 vim.keymap.set('n', '<leader>w', function()
@@ -222,6 +224,12 @@ end, { desc = 'Save buffer' })
 vim.keymap.set('n', '<leader>W', function()
 	smart_save(true) -- force Save As
 end, { desc = 'Save As' })
+-- Clear sudo password cache on exit
+vim.api.nvim_create_autocmd('VimLeavePre', {
+	callback = function()
+		sudo_password_cache = nil
+	end,
+})
 
 -- [[ Close current window ]]
 -- Helper function to check how many windows show a buffer
