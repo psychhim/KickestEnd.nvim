@@ -142,7 +142,7 @@ local function write_with_sudo(filename, content)
 	if not sudo_password_cache then
 		local pass = vim.fn.inputsecret '[sudo] password: '
 		if pass == '' or pass == nil then
-			vim.notify('Password is required, Save cancelled', vim.log.levels.WARN)
+			vim.notify('Save cancelled', vim.log.levels.WARN)
 			return false
 		end
 		sudo_password_cache = pass
@@ -179,7 +179,7 @@ local function smart_save(force_save_as)
 			-- Ask user for filename
 			filename = vim.fn.input('Save as: ', default_input, 'file')
 			if filename == '' then
-				vim.notify('Password is required, Save cancelled', vim.log.levels.WARN)
+				vim.notify('Save cancelled', vim.log.levels.WARN)
 				return
 			end
 			-- Check if file already exists
@@ -404,7 +404,7 @@ local function close_window(mode)
 				-- Ask user for filename
 				local input_name = vim.fn.input('Save as: ', '', 'file')
 				if input_name == '' then
-					vim.notify('Password is required, Save cancelled', vim.log.levels.WARN)
+					vim.notify('Save cancelled', vim.log.levels.WARN)
 					return false
 				end
 				vim.api.nvim_buf_set_name(bufnr, input_name)
@@ -439,7 +439,7 @@ local function close_window(mode)
 				if save_file() then
 					toggle_undotree_twice(callback)
 				else
-					vim.notify('Password is required, Save cancelled', vim.log.levels.WARN)
+					vim.notify('Save cancelled', vim.log.levels.WARN)
 				end
 			elseif choice:lower() == 'n' then
 				toggle_undotree_twice(callback)
