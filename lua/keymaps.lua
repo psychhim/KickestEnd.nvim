@@ -209,11 +209,7 @@ local function smart_save(force_save_as)
 			return
 		end
 	end
-	-- Preserve cursor position and undo history
-	local cursor_pos = vim.api.nvim_win_get_cursor(0)
 	vim.api.nvim_buf_set_option(0, 'modified', false)
-	vim.api.nvim_win_set_cursor(0, cursor_pos)
-
 	print('Saved ' .. filename)
 end
 -- Save current buffer
@@ -268,42 +264,47 @@ local function is_alpha_running()
 	end
 	return false
 end
+-- Helper function: toggle Undotree to preserve undo history for root-protected files
+local function toggle_undotree_twice(callback)
+	local filename = vim.api.nvim_buf_get_name(0)
+	if filename ~= '' and vim.fn.filereadable(filename) == 1 and vim.fn.filewritable(filename) == 0 then
+		if vim.fn.exists ':UndotreeToggle' == 2 then
+			vim.cmd 'UndotreeToggle'
+			vim.defer_fn(function()
+				vim.cmd 'UndotreeToggle'
+				if callback then
+					vim.defer_fn(callback, 50)
+				end
+			end, 50)
+		elseif callback then
+			callback()
+		end
+	else
+		if callback then
+			callback()
+		end
+	end
+end
 -- Main function
 local function close_window(mode)
-	local bufnr = vim.api.nvim_get_current_buf()
-	local modified = vim.bo.modified
-	local buftype = vim.api.nvim_buf_get_option(bufnr, 'buftype') -- detect terminal buffer
-	local win_count = buffer_window_count(bufnr)
-	local total_listed = listed_buffer_count()
-	-- Handle terminal buffers separately
-	if buftype == 'terminal' then
-		if win_count > 1 then
-			vim.cmd 'close'
-		else
-			vim.api.nvim_buf_delete(bufnr, { force = true })
-		end
-		return
-	end
-	-- Handle saving/discarding logic
-	if modified then
-		if mode == 'save' then
-			if vim.api.nvim_buf_get_name(bufnr) == '' then
-				local filename = vim.fn.input('Save as: ', '', 'file')
-				if filename ~= '' then
-					vim.cmd('saveas ' .. vim.fn.fnameescape(filename))
-				else
-					print 'Save cancelled'
-					return
-				end
+	local function do_close()
+		local bufnr = vim.api.nvim_get_current_buf()
+		local modified = vim.bo.modified
+		local buftype = vim.api.nvim_buf_get_option(bufnr, 'buftype') -- detect terminal buffer
+		local win_count = buffer_window_count(bufnr)
+		local total_listed = listed_buffer_count()
+		-- Handle terminal buffers separately
+		if buftype == 'terminal' then
+			if win_count > 1 then
+				vim.cmd 'close'
 			else
-				vim.cmd 'w'
+				vim.api.nvim_buf_delete(bufnr, { force = true })
 			end
-		elseif mode == 'discard' then
-			-- just continue and close without saving
-		else
-			-- ask user
-			local choice = vim.fn.input 'Buffer modified! Save (y), Discard (n), Cancel (any other key)? '
-			if choice:lower() == 'y' then
+			return
+		end
+		-- Handle saving/discarding logic
+		if modified then
+			if mode == 'save' then
 				if vim.api.nvim_buf_get_name(bufnr) == '' then
 					local filename = vim.fn.input('Save as: ', '', 'file')
 					if filename ~= '' then
@@ -315,42 +316,62 @@ local function close_window(mode)
 				else
 					vim.cmd 'w'
 				end
-			elseif choice:lower() == 'n' then
-				-- discard changes
+			elseif mode == 'discard' then
+				-- just continue and close without saving
 			else
-				print 'Quit cancelled'
-				return
+				-- ask user
+				local choice = vim.fn.input 'Buffer modified! Save (y), Discard (n), Cancel (any other key)? '
+				if choice:lower() == 'y' then
+					if vim.api.nvim_buf_get_name(bufnr) == '' then
+						local filename = vim.fn.input('Save as: ', '', 'file')
+						if filename ~= '' then
+							vim.cmd('saveas ' .. vim.fn.fnameescape(filename))
+						else
+							print 'Save cancelled'
+							return
+						end
+					else
+						vim.cmd 'w'
+					end
+				elseif choice:lower() == 'n' then
+					-- discard changes
+				else
+					print 'Quit cancelled'
+					return
+				end
+			end
+		end
+		-- Special case: only 1 listed buffer but an Alpha dashboard exists somewhere
+		if total_listed == 1 and is_alpha_running() then
+			-- Just close the current window instead of quitting Neovim
+			vim.cmd 'close'
+			return
+		end
+		-- Special case: last listed buffer in last window
+		if total_listed == 1 and win_count == 1 then
+			if modified and mode ~= 'save' then
+				-- if buffer had unsaved changes and user chose to discard, force quit
+				vim.cmd 'qa!'
+			else
+				vim.cmd 'qa'
+			end
+			return
+		end
+		-- Close logic
+		if win_count > 1 then
+			-- Buffer is visible in other windows/tabs: just close current window
+			vim.cmd 'close'
+		else
+			-- Buffer is only open in this window: delete the entire buffer from memory
+			if modified and mode ~= 'save' then
+				vim.cmd 'bwipeout!' -- discard changes
+			else
+				vim.cmd 'bdelete'
 			end
 		end
 	end
-	-- Special case: only 1 listed buffer but an Alpha dashboard exists somewhere
-	if total_listed == 1 and is_alpha_running() then
-		-- Just close the current window instead of quitting Neovim
-		vim.cmd 'close'
-		return
-	end
-	-- Special case: last listed buffer in last window
-	if total_listed == 1 and win_count == 1 then
-		if modified and mode ~= 'save' then
-			-- if buffer had unsaved changes and user chose to discard, force quit
-			vim.cmd 'qa!'
-		else
-			vim.cmd 'qa'
-		end
-		return
-	end
-	-- Close logic
-	if win_count > 1 then
-		-- Buffer is visible in other windows/tabs: just close current window
-		vim.cmd 'close'
-	else
-		-- Buffer is only open in this window: delete the entire buffer from memory
-		if modified and mode ~= 'save' then
-			vim.cmd 'bwipeout!' -- discard changes
-		else
-			vim.cmd 'bdelete'
-		end
-	end
+	-- Toggle Undotree before closing to ensure undo history is preserved
+	toggle_undotree_twice(do_close)
 end
 -- Asks what to do if the window is unsaved, otherwise just close
 vim.keymap.set('n', '<leader>q', function()
