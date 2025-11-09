@@ -688,20 +688,65 @@ vim.keymap.set('n', 'gf', function()
 end, { desc = 'Smart gf: open file under cursor in new tab or reuse buffer' })
 
 -- [[ Remap double q to exit insert/visual/terminal modes ]]
-vim.o.timeoutlen = 300 -- wait 300ms for second q
--- handler
-local function double_q_exit(mode)
-	if mode == 't' then
-		-- send <C-\><C-n> to exit terminal mode
-		return vim.api.nvim_replace_termcodes('<C-\\><C-n>', true, false, true)
+local double_q_timeout = 400
+local q_timer = nil
+local q_pending = false
+local function send_keys(keys)
+	return vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(keys, true, false, true), 'n', false)
+end
+local function q_double_escape()
+	if q_timer then
+		q_timer:stop()
+		q_timer:close()
+		q_timer = nil
+		q_pending = false
+		local mode = vim.api.nvim_get_mode().mode
+		if mode:match '[iIcR]' then
+			return vim.api.nvim_replace_termcodes('<Esc>', true, false, true)
+		elseif mode:match '[vV\x16]' then
+			return vim.api.nvim_replace_termcodes('<Esc>', true, false, true)
+		elseif mode:match 't' then
+			return vim.api.nvim_replace_termcodes('<C-\\><C-n>', true, false, true)
+		else
+			return ''
+		end
 	else
-		-- send <Esc> to exit insert/visual modes
-		return vim.api.nvim_replace_termcodes('<Esc>', true, false, true)
+		q_pending = true
+		q_timer = vim.loop.new_timer()
+		q_timer:start(
+			double_q_timeout,
+			0,
+			vim.schedule_wrap(function()
+				send_keys 'q'
+				q_timer:stop()
+				q_timer:close()
+				q_timer = nil
+				q_pending = false
+			end)
+		)
+		return ''
 	end
 end
-vim.keymap.set({ 'i', 'v' }, 'qq', function()
-	return double_q_exit 'i'
-end, { expr = true, noremap = true })
-vim.keymap.set('t', 'qq', function()
-	return double_q_exit 't'
-end, { expr = true, noremap = true })
+local function flush_pending_q_before(ch)
+	if q_pending then
+		q_timer:stop()
+		q_timer:close()
+		q_timer = nil
+		q_pending = false
+		send_keys('q' .. ch)
+		return true
+	end
+	return false
+end
+for i = 32, 126 do
+	local ch = string.char(i)
+	if ch ~= 'q' then
+		vim.keymap.set({ 'i', 'v', 't' }, ch, function()
+			if flush_pending_q_before(ch) then
+				return ''
+			end
+			return ch
+		end, { noremap = true, expr = true, silent = true })
+	end
+end
+vim.keymap.set({ 'i', 'v', 't' }, 'q', q_double_escape, { noremap = true, expr = true, silent = true })
