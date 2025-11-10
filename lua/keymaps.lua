@@ -741,7 +741,7 @@ end
 for i = 32, 126 do
 	local ch = string.char(i)
 	if ch ~= 'q' then
-		vim.keymap.set({ 'i', 'v', 't' }, ch, function()
+		vim.keymap.set({ 'i', 't' }, ch, function()
 			if flush_pending_q_before(ch) then
 				return ''
 			end
