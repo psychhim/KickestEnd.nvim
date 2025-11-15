@@ -18,14 +18,17 @@ A collection of custom keymaps for Neovim aimed at improving productivity, navig
 ### Buffer Management
 
 - Smart buffer switch using Telescope: `<leader><leader>`
-- Smart file open (`gf`) reuses empty buffers or opens in a new tab
+- Open files in new buffers by default from Neo-tree.
+- Open files in split mode by pressing h or v in Neo-tree or Telescope pickers.
 - Create new empty buffers in splits or tabs:
   - Horizontal: `<leader>sv`
   - Vertical: `<leader>sh`
   - New tab: `<leader>e`
-- Save buffers safely:
+- Better visual editor like saving:
   - `<leader>w` — Save current buffer (prompts if new)
-  - `<leader>qy` — Save and quit
+  - `<leader>W` — Save As (prompts if new)
+- Better safe closing:
+- `<leader>qy` — Save and quit
   - `<leader>qn` — Quit without saving
 
 ### Clipboard & Copying
