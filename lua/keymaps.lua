@@ -217,6 +217,8 @@ local function smart_save(force_save_as)
 		if current_path == '' then
 			-- No-name buffer: set name first
 			vim.api.nvim_buf_set_name(0, filename)
+			-- >>> filetype detect <<<
+			vim.cmd 'filetype detect'
 			-- Force overwrite if file exists
 			local write_cmd = 'write!'
 			local ok = pcall(function()
@@ -250,6 +252,8 @@ local function smart_save(force_save_as)
 			local undo_history = vim.fn.getbufinfo(old_buf)[1].changedtick
 			-- Open the new file in a fresh buffer
 			vim.cmd('edit ' .. vim.fn.fnameescape(filename))
+			-- >>> filetype detect <<<
+			vim.cmd 'filetype detect'
 			-- Restore cursor
 			vim.api.nvim_win_set_cursor(0, cursor_pos)
 			-- Restore undo history
