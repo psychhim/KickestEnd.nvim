@@ -1,6 +1,10 @@
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
+-- Disable netrw
+vim.g.loaded_netrw = 1
+vim.g.loaded_netrwPlugin = 1
+
 -- keymaps.lua
 require 'keymaps'
 
@@ -334,6 +338,23 @@ vim.o.shiftwidth = 4 -- number of spaces for autoindent
 vim.o.softtabstop = 0 -- number of spaces per Tab in insert mode
 vim.o.tabstop = 4 -- number of spaces a Tab counts for
 vim.o.smartindent = true -- auto-indent new lines
+
+-- [[ Change current directory to the path if specified and open Neo-tree there ]]
+vim.api.nvim_create_autocmd('VimEnter', {
+	callback = function(data)
+		local is_directory = vim.fn.isdirectory(data.file) == 1
+		if not is_directory then
+			return
+		end
+		local buf = vim.api.nvim_get_current_buf()
+		if vim.api.nvim_buf_get_name(buf) == '' and vim.api.nvim_buf_line_count(buf) == 1 then
+			vim.api.nvim_buf_delete(buf, { force = true })
+		end
+		vim.defer_fn(function()
+			require('neo-tree.command').execute { action = 'show', dir = data.file }
+		end, 50)
+	end,
+})
 
 -- [[ Highlight on yank ]]
 -- See `:help vim.highlight.on_yank()`

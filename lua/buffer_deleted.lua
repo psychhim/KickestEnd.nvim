@@ -21,6 +21,12 @@ local function should_skip(buf)
 		return true
 	end
 
+	-- Skip directories if spefified with the nvim command
+	local stat = vim.loop.fs_stat(bufname)
+	if stat and stat.type == 'directory' then
+		return true
+	end
+
 	-- Skip known plugin filetypes
 	for _, v in ipairs(skip_buffers) do
 		if ft == v or bufname:match(v) then
@@ -36,6 +42,7 @@ local function rename_deleted_buffers()
 	for _, buf in ipairs(vim.api.nvim_list_bufs()) do
 		if vim.api.nvim_buf_is_valid(buf) and not should_skip(buf) then
 			local bufname = vim.api.nvim_buf_get_name(buf)
+
 			if bufname ~= '' and vim.fn.filereadable(bufname) == 0 then
 				-- Skip buffers for files that have never been written (new files)
 				local ftime = vim.fn.getftime(bufname)
