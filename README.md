@@ -15,7 +15,7 @@ A collection of custom keymaps for Neovim aimed at improving productivity, navig
 - Move lines visually: `J` / `K` in visual mode
 - Switch between splits quickly: `<leader><Tab>` / `<Tab>`
 
-### Buffer & File Management
+### Buffer Management
 
 - Smart buffer switch using Telescope: `<leader><leader>`
 - Smart file open (`gf`) reuses empty buffers or opens in a new tab
@@ -34,20 +34,13 @@ A collection of custom keymaps for Neovim aimed at improving productivity, navig
 - Copy selection: `Y` (visual mode, trims extra newlines)
 - Select all and copy: `<leader>lY` (entire buffer without trailing newline)
 - Paste from clipboard: `<leader>P` (at cursor, or over selection without yanking it)
-- Notifications when content is copied to clipboard
+- Paste over selection without yanking replaced text: `<leader>p`
 
 ### Diagnostics
 
 - `[d` / `]d` — Navigate diagnostics
 - `<leader>de` — Open diagnostic floating window
 - `<leader>dq` — Set location list for diagnostics
-
-### Misc
-
-- Reselect last visual selection after moving lines
-- Better word wrap handling: `j` / `k` intelligently move through wrapped lines
-- Smart `J` in normal mode joins lines without moving cursor
-- Paste over selection without yanking replaced text: `<leader>p`
 
 ---
 
