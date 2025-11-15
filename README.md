@@ -19,7 +19,7 @@ A collection of custom keymaps for Neovim aimed at improving productivity, navig
 
 - Smart buffer switch using Telescope: `<leader><leader>`
 - Open files in new buffers by default from Neo-tree.
-- Open files in split mode by pressing h or v in Neo-tree or Telescope pickers.
+- Open files in split mode by pressing `h` or `v` in Neo-tree or Telescope pickers.
 - Create new empty buffers in splits or tabs:
   - Horizontal: `<leader>sv`
   - Vertical: `<leader>sh`
