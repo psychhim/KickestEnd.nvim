@@ -2,7 +2,7 @@
 
 ## Neovim Custom Keymaps
 
-A collection of custom keymaps and configurations for Neovim aimed at improved buffer handling, navigation and clipboard management. These keymaps are written in Lua for Neovim ≥0.7 and include enhanced smart buffer/file handling and more.
+A collection of custom keymaps and configurations for Neovim aimed at improved buffer handling, window and clipboard management. These keymaps are written in Lua for Neovim ≥0.7 and include enhanced smart buffer/file handling and more.
 
 ---
 
